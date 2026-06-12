@@ -9,6 +9,7 @@ import {
   ShadingType,
   Table,
   TableCell,
+  TableLayoutType,
   TableRow,
   TextRun,
   VerticalAlign,
@@ -175,7 +176,7 @@ function parseResultLine(line, specimen) {
   const colonIndexes = [line.indexOf(":"), line.indexOf("：")].filter((i) => i >= 0);
   const firstColon = colonIndexes.length ? Math.min(...colonIndexes) : -1;
 
-  if (firstColon >= 0 && (firstPipe < 0 || firstColon < firstPipe)) {
+  if (!line.includes("\t") && firstColon >= 0 && (firstPipe < 0 || firstColon < firstPipe)) {
     const name = line.slice(0, firstColon).trim();
     const parts = line.slice(firstColon + 1).split("|").map((part) => part.trim());
     const valueTokens = parts[0].split(/\s+/, 2);
@@ -197,8 +198,9 @@ function parseResultLine(line, specimen) {
 
     if (
       delimiter === "\t" &&
-      parts.length >= 6 &&
-      (["H", "L"].includes(parts[1].toUpperCase()) || parts[1] === "")
+      parts.length >= 4 &&
+      (["H", "L"].includes(parts[1].toUpperCase()) || parts[1] === "") &&
+      /^\(\s*.*?\s*\)$/.test(parts[3])
     ) {
       return item(
         parts[0],
@@ -232,6 +234,13 @@ function classify(items) {
   const seen = new Set();
 
   items.forEach((source, position) => {
+    if (
+      !source.isImage &&
+      !source.result.trim() &&
+      !source.unit.trim() &&
+      !source.reference.trim()
+    ) return;
+
     const canonical = aliasIndex.get(normalize(source.rawName));
     const mapped = canonical ? mapping[canonical] : null;
     const dedupeKey = canonical || normalize(source.rawName) || `unknown-${position}`;
@@ -303,10 +312,11 @@ function cell(text, width, options = {}) {
 }
 
 function labTable(rows) {
-  const widths = [1650, 3550, 1750, 2410];
+  const widths = [1650, 2550, 1900, 3260];
   return new Table({
     width: { size: 9360, type: WidthType.DXA },
     columnWidths: widths,
+    layout: TableLayoutType.FIXED,
     rows: [
       new TableRow({
         tableHeader: true,
@@ -331,6 +341,7 @@ function imageTable(rows) {
   return new Table({
     width: { size: 9360, type: WidthType.DXA },
     columnWidths: widths,
+    layout: TableLayoutType.FIXED,
     rows: [
       new TableRow({
         tableHeader: true,
@@ -401,7 +412,8 @@ function makePdfReport(grouped) {
   const root = document.createElement("div");
   root.className = "pdf-report";
   root.style.cssText = `
-    position: absolute; left: 0; top: 0; z-index: -1000; width: 190mm;
+    position: fixed; left: 0; top: 0; z-index: 2147483647; width: 190mm;
+    max-height: none; overflow: visible; pointer-events: none;
     padding: 8mm 8mm 10mm; color: #17304c; background: #fff;
     font-family: "Microsoft JhengHei", "Noto Sans TC", Arial, sans-serif;
     font-size: 10px; line-height: 1.45;
@@ -422,7 +434,7 @@ function makePdfReport(grouped) {
 
     for (const [category, rows] of Object.entries(categories)) {
       const categoryBlock = document.createElement("div");
-      categoryBlock.style.cssText = "margin:0 0 6mm;";
+      categoryBlock.style.cssText = "margin:0 0 6mm;break-inside:auto;";
       categoryBlock.innerHTML = `<h3 style="font-size:13px;color:#174e78;margin:0 0 2.5mm;">${escapeHtml(category)}</h3>`;
 
       const isImage = section === "影像檢查";
@@ -433,7 +445,7 @@ function makePdfReport(grouped) {
       table.style.cssText = "width:100%;border-collapse:collapse;table-layout:fixed;font-size:9px;break-inside:auto;";
       const headerWidths = isImage ? ["25%", "27%", "48%"] : ["22%", "34%", "20%", "24%"];
       table.innerHTML = `
-        <thead><tr>${headers.map((header, index) =>
+        <thead style="display:table-header-group;"><tr>${headers.map((header, index) =>
           `<th style="width:${headerWidths[index]};padding:2.4mm 2mm;text-align:${index >= 2 ? "center" : "left"};background:#dcecf5;border:1px solid #8198a7;color:#173b55;font-weight:700;">${header}</th>`
         ).join("")}</tr></thead>
         <tbody>${rows.map((row) => {
@@ -518,31 +530,65 @@ pdfButton.addEventListener("click", async () => {
   setStatus("正在整理並製作 PDF，請稍候...");
   try {
     const { grouped, count } = getReportData();
-    const { default: html2pdf } = await import("html2pdf.js");
+    const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+      import("html2canvas"),
+      import("jspdf"),
+    ]);
     const report = makePdfReport(grouped);
     document.body.appendChild(report);
+    const previousOverflow = document.documentElement.style.overflow;
+    document.documentElement.style.overflow = "hidden";
     await document.fonts?.ready;
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-    await html2pdf()
-      .set({
-        margin: [7, 7, 8, 7],
-        filename: "檢查報告整理.pdf",
-        image: { type: "jpeg", quality: 0.96 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          backgroundColor: "#ffffff",
-          scrollX: 0,
-          scrollY: 0,
-          windowWidth: report.scrollWidth,
-          windowHeight: report.scrollHeight,
-        },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-        pagebreak: { mode: ["css", "legacy"], avoid: ["tr", "h2", "h3"], before: [".pdf-page-break"] },
-      })
-      .from(report)
-      .save();
-    report.remove();
+    try {
+      const canvas = await html2canvas(report, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        scrollX: 0,
+        scrollY: 0,
+        logging: false,
+        windowWidth: Math.ceil(report.getBoundingClientRect().width),
+        windowHeight: report.scrollHeight,
+      });
+      if (!canvas.width || !canvas.height) throw new Error("報告畫面建立失敗");
+
+      const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait", compress: true });
+      const pageWidthMm = 196;
+      const pageHeightMm = 282;
+      const pagePixelHeight = Math.floor(canvas.width * pageHeightMm / pageWidthMm);
+      let sourceY = 0;
+      let pageIndex = 0;
+
+      while (sourceY < canvas.height) {
+        const sliceHeight = Math.min(pagePixelHeight, canvas.height - sourceY);
+        const pageCanvas = document.createElement("canvas");
+        pageCanvas.width = canvas.width;
+        pageCanvas.height = pagePixelHeight;
+        const context = pageCanvas.getContext("2d");
+        context.fillStyle = "#ffffff";
+        context.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+        context.drawImage(
+          canvas,
+          0, sourceY, canvas.width, sliceHeight,
+          0, 0, canvas.width, sliceHeight,
+        );
+        if (pageIndex > 0) pdf.addPage();
+        pdf.addImage(
+          pageCanvas.toDataURL("image/jpeg", 0.96),
+          "JPEG",
+          7, 7, pageWidthMm, pageHeightMm,
+          undefined,
+          "FAST",
+        );
+        sourceY += sliceHeight;
+        pageIndex += 1;
+      }
+      pdf.save("檢查報告整理.pdf");
+    } finally {
+      document.documentElement.style.overflow = previousOverflow;
+      report.remove();
+    }
     setStatus(`完成：已整理 ${count} 個項目，PDF 已開始下載。`, "success");
   } catch (error) {
     console.error(error);

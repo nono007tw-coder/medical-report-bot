@@ -55,13 +55,14 @@ def _parse_delimited(line, specimen):
     parts = [part.strip() for part in line.split(delimiter)]
     if (
         delimiter == "\t"
-        and len(parts) >= 6
+        and len(parts) >= 4
         and (parts[1].upper() in {"H", "L"} or not parts[1])
+        and re.fullmatch(r"\(\s*.*?\s*\)", parts[3])
     ):
         return ParsedItem(
             raw_name=parts[0],
             result=_clean_result(parts[2]),
-            unit=parts[4],
+            unit=parts[4] if len(parts) > 4 else "",
             reference=" ".join(part for part in parts[5:] if part),
             flag=parts[1].upper(),
             specimen=specimen,
@@ -198,9 +199,11 @@ def parse_text(text):
         colon_positions = [position for position in (line.find(":"), line.find("：")) if position >= 0]
         first_colon = min(colon_positions) if colon_positions else -1
         first_pipe = line.find("|")
-        if first_colon >= 0 and (first_pipe < 0 or first_colon < first_pipe):
+        if "\t" in line:
+            parsed = _parse_delimited(line, specimen)
+        elif first_colon >= 0 and (first_pipe < 0 or first_colon < first_pipe):
             parsed = _parse_colon(line, specimen)
-        elif "|" in line or "\t" in line:
+        elif "|" in line:
             parsed = _parse_delimited(line, specimen)
         else:
             parsed = _parse_whitespace(line, specimen)

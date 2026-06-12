@@ -19,10 +19,17 @@ class ParserTests(unittest.TestCase):
 BUN\t H  \t 34  \t(  )\t mg/dL \t 6~20 mg/dL
 Na\t L  \t 133  \t(  )\t mmol/L \t 136~145 mmol/L
 K\t   \t 4.3 \t(  )\t mmol/L \t 3.5~5.1 mmol/L
+Cl\t   \t  \t(  )\t  \t
+GLU\t   \t  \t(  )\t  \t
+Creat\t H  \t 6.34 \t(  )\t mg/dL \t M:0.7~1.2; F:0.5-0.9 mg/dL
+ALT\t   \t 15 \t(  )\t U/L \t M:<41; F:<33 U/L
 """
         items = parse_text(text)
 
-        self.assertEqual([item.raw_name for item in items], ["BUN", "Na", "K"])
+        self.assertEqual(
+            [item.raw_name for item in items],
+            ["BUN", "Na", "K", "Cl", "GLU", "Creat", "ALT"],
+        )
         self.assertEqual(items[0].specimen, "Blood")
         self.assertEqual(
             (items[0].flag, items[0].result, items[0].unit, items[0].reference),
@@ -35,6 +42,14 @@ K\t   \t 4.3 \t(  )\t mmol/L \t 3.5~5.1 mmol/L
         self.assertEqual(
             (items[2].flag, items[2].result, items[2].unit, items[2].reference),
             ("", "4.3", "mmol/L", "3.5~5.1 mmol/L"),
+        )
+        self.assertEqual(
+            (items[5].flag, items[5].result, items[5].unit, items[5].reference),
+            ("H", "6.34", "mg/dL", "M:0.7~1.2; F:0.5-0.9 mg/dL"),
+        )
+        self.assertEqual(
+            (items[6].flag, items[6].result, items[6].unit, items[6].reference),
+            ("", "15", "U/L", "M:<41; F:<33 U/L"),
         )
 
     def test_pipe_format_and_parentheses(self):
@@ -70,6 +85,28 @@ K\t   \t 4.3 \t(  )\t mmol/L \t 3.5~5.1 mmol/L
 
 
 class ReportTests(unittest.TestCase):
+    def test_hospital_format_report_keeps_reference_columns(self):
+        grouped = classify_items(parse_text(
+            "檢體　　：\n"
+            "(Specimen type)\tBlood\n"
+            "項目\tH/L\t結果\t前次結果\t單位\t參考值\n"
+            "Cl\t\t\t(  )\t\t\n"
+            "Creat\tH\t6.34\t(  )\tmg/dL\tM:0.7~1.2; F:0.5-0.9 mg/dL\n"
+            "ALT\t\t15\t(  )\tU/L\tM:<41; F:<33 U/L\n"
+        ))
+        rows = [
+            row
+            for categories in grouped.values()
+            for category_rows in categories.values()
+            for row in category_rows
+        ]
+
+        self.assertEqual({row["key"] for row in rows}, {"Creatinine", "ALT"})
+        creatinine = next(row for row in rows if row["key"] == "Creatinine")
+        alt = next(row for row in rows if row["key"] == "ALT")
+        self.assertEqual(creatinine["reference"], "M:0.7~1.2; F:0.5-0.9 mg/dL")
+        self.assertEqual(alt["reference"], "M:<41; F:<33 U/L")
+
     def test_docx_columns_order_and_bold_flag(self):
         grouped = classify_items(parse_text(
             "SPECIMEN: BLOOD\nHb | 10.2 | g/dL | 12.0-16.0 | L\n"

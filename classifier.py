@@ -25,6 +25,14 @@ def classify_items(items):
     seen = set()
 
     for position, item in enumerate(items):
+        if (
+            not item.is_image
+            and not item.result.strip()
+            and not item.unit.strip()
+            and not item.reference.strip()
+        ):
+            continue
+
         canonical, mapped = lookup_item(item.raw_name)
         dedupe_key = canonical or normalize_name(item.raw_name)
         if not dedupe_key:
