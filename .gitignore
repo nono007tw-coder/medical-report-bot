@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+qa-render/
+lo-profile/
+lo-profile-*/
+qa-tools/
+web/.npm-cache/
+web/node_modules/
+web/dist/

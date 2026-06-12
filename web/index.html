@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="在瀏覽器內整理檢查資料並產生 Word，不上傳檢查內容。">
+    <title>檢查報告機器人</title>
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <p class="eyebrow">MEDICAL REPORT BOT</p>
+        <h1>檢查報告機器人</h1>
+        <p class="intro">將醫院檢查文字整理成 Word。只整理資料，不提供診斷、判讀或醫療建議。</p>
+        <div class="privacy">
+          <strong>隱私優先：</strong>文字只在你的瀏覽器中處理，不會上傳到伺服器。
+        </div>
+      </header>
+
+      <section class="panel">
+        <div class="step">
+          <span>1</span>
+          <div>
+            <h2>加入檢查資料</h2>
+            <p>可以選擇文字檔，也可以直接貼上內容。</p>
+          </div>
+        </div>
+
+        <label class="file-picker">
+          <input id="fileInput" type="file" accept=".txt,text/plain">
+          <span>選擇文字檔</span>
+          <small id="fileName">尚未選擇檔案</small>
+        </label>
+
+        <label for="sourceText" class="textarea-label">或直接貼上檢查文字</label>
+        <textarea id="sourceText" placeholder="例如：
+SPECIMEN: BLOOD
+Hb | 10.2 | g/dL | 12.0-16.0 | L"></textarea>
+
+        <div class="actions">
+          <button id="sampleButton" class="secondary" type="button">載入示範資料</button>
+          <button id="generateButton" class="primary" type="button">產生 Word 報告</button>
+        </div>
+
+        <p id="status" class="status" role="status" aria-live="polite">請先選擇文字檔或貼上內容。</p>
+      </section>
+
+      <section class="notes">
+        <h2>使用前請注意</h2>
+        <ul>
+          <li>請盡量移除姓名、病歷號、身分證字號等個人資料。</li>
+          <li>只有原始資料明確標示 H 或 L 時，結果才會加粗。</li>
+          <li>未知項目會保留，不會因為沒有對照名稱而消失。</li>
+          <li>影像報告原文會完整保留，不會摘要或改寫。</li>
+        </ul>
+      </section>
+    </main>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

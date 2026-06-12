@@ -1,0 +1,48 @@
+SPECIMEN: BLOOD
+WBC | 7.51 | 10^3/uL | 4.0-10.0 |
+Hb | 10.2 | g/dL | 12.0-16.0 | L
+Platelet | 245 | 10^3/uL | 150-400 |
+Iron | 45 | ug/dL | 50-170 | L
+TIBC | 280 | ug/dL | 250-450 |
+Ferritin | 86 | ng/mL | 13-150 |
+TSAT | 16 | % | 20-50 | L
+BUN | 38 | mg/dL | 7-20 | H
+CREAT. | 2.10 | mg/dL | 0.5-1.1 | H
+eGFR | 25 | mL/min/1.73m2 | >=60 | L
+Uric Acid | 7.8 | mg/dL | 2.6-6.0 | H
+Na | 139 | mmol/L | 136-145 |
+K | 4.6 | mmol/L | 3.5-5.1 |
+Calcium | 9.1 | mg/dL | 8.6-10.2 |
+I.P. | ( 4.2 ) | mg/dL | 2.5-4.5 |
+AST | 22 | U/L | 0-35 |
+ALT | 18 | U/L | 0-35 |
+ALP | 76 | U/L | 35-104 |
+ALB | 4.1 | g/dL | 3.5-5.2 |
+Glucose | 102 | mg/dL | 70-99 | H
+T-CHOL | 188 | mg/dL | <200 |
+TG | 125 | mg/dL | <150 |
+HDL-C | 51 | mg/dL | >40 |
+LDL-C | 112 | mg/dL | <130 |
+TSH | 2.15 | uIU/mL | 0.27-4.20 |
+FREE T4 | 1.18 | ng/dL | 0.93-1.70 |
+Intact-PTH | 82 | pg/mL | 15-65 | H
+Novel Biomarker Z | 9.8 | AU/mL | N/A |
+
+SPECIMEN: URINE(SPOT)
+pH(U) | 6.0 | | 5.0-8.0 |
+Specific Gravity | 1.012 | | 1.005-1.030 |
+Glucose(U) | Negative | | Negative |
+Urine Albumin | 48 | mg/L | N/A |
+Urine Creatinine | 80 | mg/dL | N/A |
+ACRatio | 60 | mg/g | <30 | H
+PCRatio | 0.25 | g/g | <0.15 | H
+RBC(U) | 1-2 | /HPF | 0-2 |
+WBC(U) | 0-1 | /HPF | 0-5 |
+Unknown Urine Crystal | Few | | N/A |
+
+Abdominal Sonography
+Finding: Liver is normal in size with mildly increased echogenicity.
+Gallbladder: No stone is identified.
+Kidneys: Bilateral increased cortical echogenicity. No hydronephrosis.
+Impression: Mild fatty liver and chronic medical renal disease.
+Conclusion: Correlate with clinical and laboratory findings.

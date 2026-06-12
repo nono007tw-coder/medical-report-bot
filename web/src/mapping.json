@@ -1,0 +1,1008 @@
+{
+  "WBC": {
+    "aliases": [
+      "WBC",
+      "White Blood Cell",
+      "Leukocyte"
+    ],
+    "zh": "白血球",
+    "en": "White Blood Cell, WBC",
+    "section": "抽血檢查",
+    "category": "血液常規檢查",
+    "order": 101
+  },
+  "RBC": {
+    "aliases": [
+      "RBC",
+      "Red Blood Cell"
+    ],
+    "zh": "紅血球",
+    "en": "Red Blood Cell, RBC",
+    "section": "抽血檢查",
+    "category": "血液常規檢查",
+    "order": 102
+  },
+  "Hb": {
+    "aliases": [
+      "Hb",
+      "HGB",
+      "Hemoglobin"
+    ],
+    "zh": "血紅素",
+    "en": "Hemoglobin, Hb",
+    "section": "抽血檢查",
+    "category": "血液常規檢查",
+    "order": 103
+  },
+  "Hct": {
+    "aliases": [
+      "Hct",
+      "HCT",
+      "Hematocrit"
+    ],
+    "zh": "血比容",
+    "en": "Hematocrit, Hct",
+    "section": "抽血檢查",
+    "category": "血液常規檢查",
+    "order": 104
+  },
+  "MCV": {
+    "aliases": [
+      "MCV"
+    ],
+    "zh": "平均紅血球容積",
+    "en": "Mean Corpuscular Volume, MCV",
+    "section": "抽血檢查",
+    "category": "血液常規檢查",
+    "order": 105
+  },
+  "MCH": {
+    "aliases": [
+      "MCH"
+    ],
+    "zh": "平均紅血球血紅素量",
+    "en": "Mean Corpuscular Hemoglobin, MCH",
+    "section": "抽血檢查",
+    "category": "血液常規檢查",
+    "order": 106
+  },
+  "MCHC": {
+    "aliases": [
+      "MCHC"
+    ],
+    "zh": "平均紅血球血紅素濃度",
+    "en": "Mean Corpuscular Hemoglobin Concentration, MCHC",
+    "section": "抽血檢查",
+    "category": "血液常規檢查",
+    "order": 107
+  },
+  "Platelet": {
+    "aliases": [
+      "PLT",
+      "Platelet",
+      "Platelet Count"
+    ],
+    "zh": "血小板",
+    "en": "Platelet Count, PLT",
+    "section": "抽血檢查",
+    "category": "血液常規檢查",
+    "order": 108
+  },
+  "AST": {
+    "aliases": [
+      "AST",
+      "GOT",
+      "SGOT"
+    ],
+    "zh": "天門冬胺酸轉胺酶",
+    "en": "Aspartate Aminotransferase, AST",
+    "section": "抽血檢查",
+    "category": "肝膽功能檢查",
+    "order": 201
+  },
+  "ALT": {
+    "aliases": [
+      "ALT",
+      "GPT",
+      "SGPT"
+    ],
+    "zh": "丙胺酸轉胺酶",
+    "en": "Alanine Aminotransferase, ALT",
+    "section": "抽血檢查",
+    "category": "肝膽功能檢查",
+    "order": 202
+  },
+  "ALP": {
+    "aliases": [
+      "ALP",
+      "Alkaline Phosphatase"
+    ],
+    "zh": "鹼性磷酸酶",
+    "en": "Alkaline Phosphatase, ALP",
+    "section": "抽血檢查",
+    "category": "肝膽功能檢查",
+    "order": 203
+  },
+  "GGT": {
+    "aliases": [
+      "GGT",
+      "r-GT",
+      "Gamma-GT"
+    ],
+    "zh": "γ-麩胺醯轉移酶",
+    "en": "Gamma-Glutamyl Transferase, GGT",
+    "section": "抽血檢查",
+    "category": "肝膽功能檢查",
+    "order": 204
+  },
+  "Total Bilirubin": {
+    "aliases": [
+      "T-Bil",
+      "Total Bilirubin"
+    ],
+    "zh": "總膽紅素",
+    "en": "Total Bilirubin, T-Bil",
+    "section": "抽血檢查",
+    "category": "肝膽功能檢查",
+    "order": 205
+  },
+  "Albumin": {
+    "aliases": [
+      "ALB",
+      "Albumin"
+    ],
+    "zh": "白蛋白",
+    "en": "Albumin, Alb",
+    "section": "抽血檢查",
+    "category": "肝膽功能檢查",
+    "order": 206
+  },
+  "Total Protein": {
+    "aliases": [
+      "TP",
+      "Total Protein"
+    ],
+    "zh": "總蛋白",
+    "en": "Total Protein, TP",
+    "section": "抽血檢查",
+    "category": "肝膽功能檢查",
+    "order": 207
+  },
+  "LDH": {
+    "aliases": [
+      "LDH",
+      "Lactate Dehydrogenase"
+    ],
+    "zh": "乳酸脫氫酶",
+    "en": "Lactate Dehydrogenase, LDH",
+    "section": "抽血檢查",
+    "category": "肝膽功能檢查",
+    "order": 208
+  },
+  "BUN": {
+    "aliases": [
+      "BUN",
+      "Blood Urea Nitrogen",
+      "Urea Nitrogen"
+    ],
+    "zh": "血中尿素氮",
+    "en": "Blood Urea Nitrogen, BUN",
+    "section": "抽血檢查",
+    "category": "腎功能檢查",
+    "order": 301
+  },
+  "Creatinine": {
+    "aliases": [
+      "CREAT.",
+      "CREAT",
+      "Crea",
+      "Creatinine",
+      "Cr"
+    ],
+    "zh": "肌酸酐",
+    "en": "Creatinine, Cr",
+    "section": "抽血檢查",
+    "category": "腎功能檢查",
+    "order": 302
+  },
+  "eGFR": {
+    "aliases": [
+      "eGFR",
+      "Estimated GFR"
+    ],
+    "zh": "估算腎絲球過濾率",
+    "en": "Estimated Glomerular Filtration Rate, eGFR",
+    "section": "抽血檢查",
+    "category": "腎功能檢查",
+    "order": 303
+  },
+  "Uric Acid": {
+    "aliases": [
+      "Uric Acid",
+      "UA"
+    ],
+    "zh": "尿酸",
+    "en": "Uric Acid, UA",
+    "section": "抽血檢查",
+    "category": "腎功能檢查",
+    "order": 304
+  },
+  "Cystatin C": {
+    "aliases": [
+      "Cystatin C"
+    ],
+    "zh": "胱抑素 C",
+    "en": "Cystatin C",
+    "section": "抽血檢查",
+    "category": "腎臟特殊檢查",
+    "order": 401
+  },
+  "Sodium": {
+    "aliases": [
+      "Na",
+      "Sodium"
+    ],
+    "zh": "鈉",
+    "en": "Sodium, Na",
+    "section": "抽血檢查",
+    "category": "電解質與酸鹼檢查",
+    "order": 501
+  },
+  "Potassium": {
+    "aliases": [
+      "K",
+      "Potassium"
+    ],
+    "zh": "鉀",
+    "en": "Potassium, K",
+    "section": "抽血檢查",
+    "category": "電解質與酸鹼檢查",
+    "order": 502
+  },
+  "Chloride": {
+    "aliases": [
+      "Cl",
+      "Chloride"
+    ],
+    "zh": "氯",
+    "en": "Chloride, Cl",
+    "section": "抽血檢查",
+    "category": "電解質與酸鹼檢查",
+    "order": 503
+  },
+  "Calcium": {
+    "aliases": [
+      "Ca",
+      "Calcium"
+    ],
+    "zh": "鈣",
+    "en": "Calcium, Ca",
+    "section": "抽血檢查",
+    "category": "電解質與酸鹼檢查",
+    "order": 504
+  },
+  "Phosphate": {
+    "aliases": [
+      "P",
+      "I.P.",
+      "IP",
+      "Phosphate",
+      "Phosphorus"
+    ],
+    "zh": "磷",
+    "en": "Phosphate, P",
+    "section": "抽血檢查",
+    "category": "電解質與酸鹼檢查",
+    "order": 505
+  },
+  "Magnesium": {
+    "aliases": [
+      "Mg",
+      "Magnesium"
+    ],
+    "zh": "鎂",
+    "en": "Magnesium, Mg",
+    "section": "抽血檢查",
+    "category": "電解質與酸鹼檢查",
+    "order": 506
+  },
+  "Bicarbonate": {
+    "aliases": [
+      "HCO3",
+      "Bicarbonate",
+      "Total CO2",
+      "CO2"
+    ],
+    "zh": "碳酸氫根",
+    "en": "Bicarbonate, HCO3-",
+    "section": "抽血檢查",
+    "category": "電解質與酸鹼檢查",
+    "order": 507
+  },
+  "Glucose": {
+    "aliases": [
+      "Glucose",
+      "GLU",
+      "AC Sugar",
+      "Fasting Glucose"
+    ],
+    "zh": "葡萄糖",
+    "en": "Glucose, Glu",
+    "section": "抽血檢查",
+    "category": "血糖與糖尿病相關檢查",
+    "order": 601
+  },
+  "HbA1c": {
+    "aliases": [
+      "HbA1c",
+      "A1C",
+      "Glycated Hemoglobin"
+    ],
+    "zh": "糖化血色素",
+    "en": "Glycated Hemoglobin, HbA1c",
+    "section": "抽血檢查",
+    "category": "血糖與糖尿病相關檢查",
+    "order": 602
+  },
+  "Total Cholesterol": {
+    "aliases": [
+      "T-CHOL",
+      "CHOL",
+      "Total Cholesterol"
+    ],
+    "zh": "總膽固醇",
+    "en": "Total Cholesterol, TC",
+    "section": "抽血檢查",
+    "category": "血脂檢查",
+    "order": 701
+  },
+  "Triglyceride": {
+    "aliases": [
+      "TG",
+      "Triglyceride"
+    ],
+    "zh": "三酸甘油酯",
+    "en": "Triglyceride, TG",
+    "section": "抽血檢查",
+    "category": "血脂檢查",
+    "order": 702
+  },
+  "HDL-C": {
+    "aliases": [
+      "HDL",
+      "HDL-C",
+      "HDL Cholesterol"
+    ],
+    "zh": "高密度脂蛋白膽固醇",
+    "en": "High-Density Lipoprotein Cholesterol, HDL-C",
+    "section": "抽血檢查",
+    "category": "血脂檢查",
+    "order": 703
+  },
+  "LDL-C": {
+    "aliases": [
+      "LDL",
+      "LDL-C",
+      "LDL Cholesterol"
+    ],
+    "zh": "低密度脂蛋白膽固醇",
+    "en": "Low-Density Lipoprotein Cholesterol, LDL-C",
+    "section": "抽血檢查",
+    "category": "血脂檢查",
+    "order": 704
+  },
+  "Iron": {
+    "aliases": [
+      "Iron",
+      "Fe"
+    ],
+    "zh": "血清鐵",
+    "en": "Serum Iron, Fe",
+    "section": "抽血檢查",
+    "category": "鐵質與貧血相關檢查",
+    "order": 801
+  },
+  "TIBC": {
+    "aliases": [
+      "TIBC"
+    ],
+    "zh": "總鐵結合能力",
+    "en": "Total Iron-Binding Capacity, TIBC",
+    "section": "抽血檢查",
+    "category": "鐵質與貧血相關檢查",
+    "order": 802
+  },
+  "Ferritin": {
+    "aliases": [
+      "Ferritin"
+    ],
+    "zh": "鐵蛋白",
+    "en": "Ferritin",
+    "section": "抽血檢查",
+    "category": "鐵質與貧血相關檢查",
+    "order": 803
+  },
+  "TSAT": {
+    "aliases": [
+      "TSAT",
+      "Transferrin Saturation"
+    ],
+    "zh": "轉鐵蛋白飽和度",
+    "en": "Transferrin Saturation, TSAT",
+    "section": "抽血檢查",
+    "category": "鐵質與貧血相關檢查",
+    "order": 804
+  },
+  "Vitamin D": {
+    "aliases": [
+      "Vitamin D",
+      "25-OH Vitamin D",
+      "25(OH)D"
+    ],
+    "zh": "維生素 D",
+    "en": "25-Hydroxyvitamin D, 25(OH)D",
+    "section": "抽血檢查",
+    "category": "維生素與營養檢查",
+    "order": 901
+  },
+  "TSH": {
+    "aliases": [
+      "TSH"
+    ],
+    "zh": "甲狀腺刺激素",
+    "en": "Thyroid-Stimulating Hormone, TSH",
+    "section": "抽血檢查",
+    "category": "甲狀腺功能檢查",
+    "order": 1001
+  },
+  "Free T4": {
+    "aliases": [
+      "FREE T4",
+      "Free T4",
+      "FT4"
+    ],
+    "zh": "游離甲狀腺素",
+    "en": "Free Thyroxine, Free T4",
+    "section": "抽血檢查",
+    "category": "甲狀腺功能檢查",
+    "order": 1002
+  },
+  "Intact-PTH": {
+    "aliases": [
+      "Intact-PTH",
+      "iPTH",
+      "PTH"
+    ],
+    "zh": "完整副甲狀腺素",
+    "en": "Intact Parathyroid Hormone, iPTH",
+    "section": "抽血檢查",
+    "category": "骨礦物質與副甲狀腺檢查",
+    "order": 1101
+  },
+  "CRP": {
+    "aliases": [
+      "CRP",
+      "C-Reactive Protein"
+    ],
+    "zh": "C 反應蛋白",
+    "en": "C-Reactive Protein, CRP",
+    "section": "抽血檢查",
+    "category": "發炎與感染指標",
+    "order": 1201
+  },
+  "ESR": {
+    "aliases": [
+      "ESR"
+    ],
+    "zh": "紅血球沉降速率",
+    "en": "Erythrocyte Sedimentation Rate, ESR",
+    "section": "抽血檢查",
+    "category": "發炎與感染指標",
+    "order": 1202
+  },
+  "PCT": {
+    "aliases": [
+      "PCT",
+      "Procalcitonin"
+    ],
+    "zh": "降鈣素原",
+    "en": "Procalcitonin, PCT",
+    "section": "抽血檢查",
+    "category": "發炎與感染指標",
+    "order": 1203
+  },
+  "Troponin": {
+    "aliases": [
+      "Troponin",
+      "Troponin-I",
+      "hs-TnI"
+    ],
+    "zh": "心肌肌鈣蛋白",
+    "en": "Cardiac Troponin, cTn",
+    "section": "抽血檢查",
+    "category": "心臟相關檢查",
+    "order": 1401
+  },
+  "CK-MB": {
+    "aliases": [
+      "CK-MB",
+      "CKMB"
+    ],
+    "zh": "肌酸激酶同功酶 MB",
+    "en": "Creatine Kinase-MB, CK-MB",
+    "section": "抽血檢查",
+    "category": "心臟相關檢查",
+    "order": 1402
+  },
+  "BNP": {
+    "aliases": [
+      "BNP"
+    ],
+    "zh": "B 型利鈉肽",
+    "en": "B-Type Natriuretic Peptide, BNP",
+    "section": "抽血檢查",
+    "category": "心臟相關檢查",
+    "order": 1403
+  },
+  "NT-proBNP": {
+    "aliases": [
+      "NT-proBNP",
+      "NT-pro BNP"
+    ],
+    "zh": "N 端前 B 型利鈉肽",
+    "en": "N-Terminal pro-B-Type Natriuretic Peptide, NT-proBNP",
+    "section": "抽血檢查",
+    "category": "心臟相關檢查",
+    "order": 1404
+  },
+  "CK": {
+    "aliases": [
+      "CK",
+      "CPK",
+      "Creatine Kinase"
+    ],
+    "zh": "肌酸激酶",
+    "en": "Creatine Kinase, CK",
+    "section": "抽血檢查",
+    "category": "肌肉酵素檢查",
+    "order": 1501
+  },
+  "Myoglobin": {
+    "aliases": [
+      "Myoglobin"
+    ],
+    "zh": "肌紅蛋白",
+    "en": "Myoglobin",
+    "section": "抽血檢查",
+    "category": "肌肉酵素檢查",
+    "order": 1502
+  },
+  "PT": {
+    "aliases": [
+      "PT",
+      "Prothrombin Time"
+    ],
+    "zh": "凝血酶原時間",
+    "en": "Prothrombin Time, PT",
+    "section": "抽血檢查",
+    "category": "凝血功能檢查",
+    "order": 1601
+  },
+  "INR": {
+    "aliases": [
+      "INR"
+    ],
+    "zh": "國際標準化比值",
+    "en": "International Normalized Ratio, INR",
+    "section": "抽血檢查",
+    "category": "凝血功能檢查",
+    "order": 1602
+  },
+  "APTT": {
+    "aliases": [
+      "APTT",
+      "aPTT"
+    ],
+    "zh": "活化部分凝血活酶時間",
+    "en": "Activated Partial Thromboplastin Time, APTT",
+    "section": "抽血檢查",
+    "category": "凝血功能檢查",
+    "order": 1603
+  },
+  "D-dimer": {
+    "aliases": [
+      "D-dimer",
+      "D Dimer"
+    ],
+    "zh": "D-二聚體",
+    "en": "D-Dimer",
+    "section": "抽血檢查",
+    "category": "凝血功能檢查",
+    "order": 1604
+  },
+  "ANA": {
+    "aliases": [
+      "ANA"
+    ],
+    "zh": "抗核抗體",
+    "en": "Antinuclear Antibody, ANA",
+    "section": "抽血檢查",
+    "category": "自體免疫與風濕免疫檢查",
+    "order": 1701
+  },
+  "RF": {
+    "aliases": [
+      "RF",
+      "Rheumatoid Factor"
+    ],
+    "zh": "類風濕因子",
+    "en": "Rheumatoid Factor, RF",
+    "section": "抽血檢查",
+    "category": "自體免疫與風濕免疫檢查",
+    "order": 1702
+  },
+  "ANCA": {
+    "aliases": [
+      "ANCA"
+    ],
+    "zh": "抗嗜中性球細胞質抗體",
+    "en": "Antineutrophil Cytoplasmic Antibody, ANCA",
+    "section": "抽血檢查",
+    "category": "自體免疫與風濕免疫檢查",
+    "order": 1703
+  },
+  "C3": {
+    "aliases": [
+      "C3",
+      "Complement C3"
+    ],
+    "zh": "補體 C3",
+    "en": "Complement Component 3, C3",
+    "section": "抽血檢查",
+    "category": "自體免疫與風濕免疫檢查",
+    "order": 1704
+  },
+  "C4": {
+    "aliases": [
+      "C4",
+      "Complement C4"
+    ],
+    "zh": "補體 C4",
+    "en": "Complement Component 4, C4",
+    "section": "抽血檢查",
+    "category": "自體免疫與風濕免疫檢查",
+    "order": 1705
+  },
+  "IgG": {
+    "aliases": [
+      "IgG"
+    ],
+    "zh": "免疫球蛋白 G",
+    "en": "Immunoglobulin G, IgG",
+    "section": "抽血檢查",
+    "category": "免疫與特殊蛋白檢查",
+    "order": 1801
+  },
+  "IgA": {
+    "aliases": [
+      "IgA"
+    ],
+    "zh": "免疫球蛋白 A",
+    "en": "Immunoglobulin A, IgA",
+    "section": "抽血檢查",
+    "category": "免疫與特殊蛋白檢查",
+    "order": 1802
+  },
+  "IgM": {
+    "aliases": [
+      "IgM"
+    ],
+    "zh": "免疫球蛋白 M",
+    "en": "Immunoglobulin M, IgM",
+    "section": "抽血檢查",
+    "category": "免疫與特殊蛋白檢查",
+    "order": 1803
+  },
+  "Free Light Chain": {
+    "aliases": [
+      "Free Light Chain",
+      "FLC",
+      "Kappa/Lambda"
+    ],
+    "zh": "游離輕鏈",
+    "en": "Serum Free Light Chain, FLC",
+    "section": "抽血檢查",
+    "category": "免疫與特殊蛋白檢查",
+    "order": 1804
+  },
+  "AFP": {
+    "aliases": [
+      "AFP"
+    ],
+    "zh": "甲型胎兒蛋白",
+    "en": "Alpha-Fetoprotein, AFP",
+    "section": "抽血檢查",
+    "category": "腫瘤指標",
+    "order": 2001
+  },
+  "CEA": {
+    "aliases": [
+      "CEA"
+    ],
+    "zh": "癌胚抗原",
+    "en": "Carcinoembryonic Antigen, CEA",
+    "section": "抽血檢查",
+    "category": "腫瘤指標",
+    "order": 2002
+  },
+  "CA19-9": {
+    "aliases": [
+      "CA19-9",
+      "CA 19-9"
+    ],
+    "zh": "醣類抗原 19-9",
+    "en": "Carbohydrate Antigen 19-9, CA19-9",
+    "section": "抽血檢查",
+    "category": "腫瘤指標",
+    "order": 2003
+  },
+  "PSA": {
+    "aliases": [
+      "PSA"
+    ],
+    "zh": "前列腺特異抗原",
+    "en": "Prostate-Specific Antigen, PSA",
+    "section": "抽血檢查",
+    "category": "腫瘤指標",
+    "order": 2004
+  },
+  "Thyroglobulin": {
+    "aliases": [
+      "Thyroglobulin",
+      "Tg"
+    ],
+    "zh": "甲狀腺球蛋白",
+    "en": "Thyroglobulin, Tg",
+    "section": "抽血檢查",
+    "category": "甲狀腺功能檢查",
+    "order": 1003
+  },
+  "Amylase": {
+    "aliases": [
+      "Amylase"
+    ],
+    "zh": "澱粉酶",
+    "en": "Amylase",
+    "section": "抽血檢查",
+    "category": "胰臟功能檢查",
+    "order": 2101
+  },
+  "Lipase": {
+    "aliases": [
+      "Lipase"
+    ],
+    "zh": "脂肪酶",
+    "en": "Lipase",
+    "section": "抽血檢查",
+    "category": "胰臟功能檢查",
+    "order": 2102
+  },
+  "Urine Protein": {
+    "aliases": [
+      "Urine Protein",
+      "Protein(U)",
+      "Urine Total Protein"
+    ],
+    "zh": "尿蛋白",
+    "en": "Urine Protein",
+    "section": "驗尿檢查",
+    "category": "尿蛋白與白蛋白",
+    "order": 2301
+  },
+  "Urine Creatinine": {
+    "aliases": [
+      "Urine Creatinine",
+      "Creatinine(U)",
+      "U-Cr"
+    ],
+    "zh": "尿液肌酸酐",
+    "en": "Urine Creatinine, U-Cr",
+    "section": "驗尿檢查",
+    "category": "尿蛋白與白蛋白",
+    "order": 2302
+  },
+  "ACR": {
+    "aliases": [
+      "ACRatio",
+      "ACR",
+      "UACR"
+    ],
+    "zh": "尿白蛋白肌酸酐比",
+    "en": "Albumin-to-Creatinine Ratio, ACR",
+    "section": "驗尿檢查",
+    "category": "尿蛋白與白蛋白",
+    "order": 2303
+  },
+  "PCR": {
+    "aliases": [
+      "PCRatio",
+      "PCR",
+      "UPCR"
+    ],
+    "zh": "尿蛋白肌酸酐比",
+    "en": "Protein-to-Creatinine Ratio, PCR",
+    "section": "驗尿檢查",
+    "category": "尿蛋白與白蛋白",
+    "order": 2304
+  },
+  "Urine Albumin": {
+    "aliases": [
+      "Urine Albumin",
+      "Microalbumin",
+      "U-Albumin"
+    ],
+    "zh": "尿液白蛋白",
+    "en": "Urine Albumin",
+    "section": "驗尿檢查",
+    "category": "尿蛋白與白蛋白",
+    "order": 2305
+  },
+  "Urine pH": {
+    "aliases": [
+      "pH(U)",
+      "Urine pH",
+      "pH"
+    ],
+    "zh": "尿液酸鹼值",
+    "en": "Urine pH",
+    "section": "驗尿檢查",
+    "category": "尿液一般檢查",
+    "order": 2201
+  },
+  "Urine SG": {
+    "aliases": [
+      "Specific Gravity",
+      "S.G.",
+      "SG"
+    ],
+    "zh": "尿液比重",
+    "en": "Urine Specific Gravity, SG",
+    "section": "驗尿檢查",
+    "category": "尿液一般檢查",
+    "order": 2202
+  },
+  "Urine Glucose": {
+    "aliases": [
+      "Glucose(U)",
+      "Urine Glucose"
+    ],
+    "zh": "尿糖",
+    "en": "Urine Glucose",
+    "section": "驗尿檢查",
+    "category": "尿液一般檢查",
+    "order": 2203
+  },
+  "Urine RBC": {
+    "aliases": [
+      "RBC(U)",
+      "Urine RBC"
+    ],
+    "zh": "尿液紅血球",
+    "en": "Urine Red Blood Cell, RBC",
+    "section": "驗尿檢查",
+    "category": "尿沉渣",
+    "order": 2401
+  },
+  "Urine WBC": {
+    "aliases": [
+      "WBC(U)",
+      "Urine WBC"
+    ],
+    "zh": "尿液白血球",
+    "en": "Urine White Blood Cell, WBC",
+    "section": "驗尿檢查",
+    "category": "尿沉渣",
+    "order": 2402
+  },
+  "Abdominal Sonography": {
+    "aliases": [
+      "Abdominal Sonography",
+      "Abdominal Ultrasound",
+      "SONOGRAM"
+    ],
+    "zh": "腹部超音波",
+    "en": "Abdominal Sonography",
+    "section": "影像檢查",
+    "category": "超音波檢查",
+    "order": 3001
+  },
+  "CXR": {
+    "aliases": [
+      "Chest X-ray",
+      "CXR"
+    ],
+    "zh": "胸部 X 光",
+    "en": "Chest X-ray, CXR",
+    "section": "影像檢查",
+    "category": "X 光檢查",
+    "order": 3101
+  },
+  "CT": {
+    "aliases": [
+      "Computed Tomography",
+      "CT"
+    ],
+    "zh": "電腦斷層",
+    "en": "Computed Tomography, CT",
+    "section": "影像檢查",
+    "category": "電腦斷層檢查",
+    "order": 3201
+  },
+  "MRI": {
+    "aliases": [
+      "Magnetic Resonance Imaging",
+      "MRI"
+    ],
+    "zh": "磁振造影",
+    "en": "Magnetic Resonance Imaging, MRI",
+    "section": "影像檢查",
+    "category": "磁振造影檢查",
+    "order": 3301
+  },
+  "DXA": {
+    "aliases": [
+      "DXA",
+      "DEXA",
+      "Bone Density"
+    ],
+    "zh": "骨質密度檢查",
+    "en": "Dual-Energy X-ray Absorptiometry, DXA",
+    "section": "影像檢查",
+    "category": "骨質密度檢查",
+    "order": 3401
+  },
+  "EGD": {
+    "aliases": [
+      "EGD",
+      "Gastroscopy"
+    ],
+    "zh": "上消化道內視鏡",
+    "en": "Esophagogastroduodenoscopy, EGD",
+    "section": "影像檢查",
+    "category": "內視鏡檢查",
+    "order": 3501
+  },
+  "Colonoscopy": {
+    "aliases": [
+      "Colonoscopy"
+    ],
+    "zh": "大腸鏡",
+    "en": "Colonoscopy",
+    "section": "影像檢查",
+    "category": "內視鏡檢查",
+    "order": 3502
+  },
+  "ECG": {
+    "aliases": [
+      "ECG",
+      "EKG",
+      "Electrocardiography"
+    ],
+    "zh": "心電圖",
+    "en": "Electrocardiography, ECG",
+    "section": "影像檢查",
+    "category": "心臟血管檢查",
+    "order": 3601
+  },
+  "Echocardiography": {
+    "aliases": [
+      "Echocardiography",
+      "Echo"
+    ],
+    "zh": "心臟超音波",
+    "en": "Echocardiography, Echo",
+    "section": "影像檢查",
+    "category": "心臟血管檢查",
+    "order": 3602
+  }
+}
