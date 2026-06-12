@@ -16,7 +16,7 @@ def _unknown_location(item):
     if "URINE" in combined or "尿" in combined:
         return "驗尿檢查", "其他尿液檢查"
     if any(token in combined for token in ("BLOOD", "SERUM", "PLASMA", "血")):
-        return "抽血檢查", "其他抽血檢查"
+        return "抽血檢查", "其他生化項目"
     return "其他檢查項目", "其他檢查項目"
 
 

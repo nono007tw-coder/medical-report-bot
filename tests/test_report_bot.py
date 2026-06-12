@@ -155,16 +155,24 @@ class ReportTests(unittest.TestCase):
             write_report(grouped, output)
             doc = Document(output)
             headings = [p.text for p in doc.paragraphs if p.style.name == "Heading 1"]
-            self.assertEqual(headings, ["抽血檢查", "驗尿檢查", "影像檢查"])
+            self.assertEqual(headings, ["1. 血液檢查", "3. 尿液檢查", "4. 影像檢查"])
             self.assertEqual(
                 [cell.text for cell in doc.tables[0].rows[0].cells],
-                ["中文項目", "English", "結果", "正常值"],
+                ["中文項目", "英文項目", "結果", "正常值"],
             )
             result_cell = doc.tables[0].rows[1].cells[2]
             self.assertTrue(any(run.bold for run in result_cell.paragraphs[0].runs))
+            self.assertEqual(len(doc.tables[-1].columns), 4)
             image_text = doc.tables[-1].rows[1].cells[2].text
             self.assertIn("Finding: Test finding.", image_text)
             self.assertIn("Impression: Test impression.", image_text)
+            report_text = "\n".join(
+                [paragraph.text for paragraph in doc.paragraphs]
+                + [cell.text for table in doc.tables for row in table.rows for cell in row.cells]
+            )
+            self.assertNotIn("原始資料", report_text)
+            self.assertNotIn("English", report_text)
+            self.assertNotIn("其他抽血", report_text)
 
 
 if __name__ == "__main__":

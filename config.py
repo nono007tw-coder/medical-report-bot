@@ -1,7 +1,7 @@
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent
-DEFAULT_OUTPUT = PROJECT_ROOT / "output" / "檢查報告整理.docx"
+DEFAULT_OUTPUT = PROJECT_ROOT / "output" / "檢查報告整理-病人閱讀版.docx"
 
 SECTION_ORDER = ["抽血檢查", "驗尿檢查", "影像檢查", "其他檢查項目"]
 
@@ -12,7 +12,7 @@ BLOOD_CATEGORY_ORDER = [
     "骨礦物質與副甲狀腺檢查", "發炎與感染指標", "感染血清學檢查",
     "心臟相關檢查", "肌肉酵素檢查", "凝血功能檢查",
     "自體免疫與風濕免疫檢查", "免疫與特殊蛋白檢查",
-    "內分泌與荷爾蒙檢查", "腫瘤指標", "胰臟功能檢查", "其他抽血檢查",
+    "內分泌與荷爾蒙檢查", "腫瘤指標", "胰臟功能檢查", "其他生化項目",
 ]
 
 URINE_CATEGORY_ORDER = [

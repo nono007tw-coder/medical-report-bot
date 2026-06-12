@@ -28,7 +28,7 @@ const CATEGORY_ORDER = {
     "骨礦物質與副甲狀腺檢查", "發炎與感染指標", "感染血清學檢查",
     "心臟相關檢查", "肌肉酵素檢查", "凝血功能檢查",
     "自體免疫與風濕免疫檢查", "免疫與特殊蛋白檢查",
-    "內分泌與荷爾蒙檢查", "腫瘤指標", "胰臟功能檢查", "其他抽血檢查",
+    "內分泌與荷爾蒙檢查", "腫瘤指標", "胰臟功能檢查", "其他生化項目",
   ],
   驗尿檢查: [
     "尿液一般檢查", "尿蛋白與白蛋白", "尿沉渣", "尿液生化檢查",
@@ -336,7 +336,7 @@ function unknownLocation(source) {
     return ["影像檢查", "其他影像檢查"];
   }
   if (combined.includes("URINE") || combined.includes("尿")) return ["驗尿檢查", "其他尿液檢查"];
-  if (/(BLOOD|SERUM|PLASMA|血)/.test(combined)) return ["抽血檢查", "其他抽血檢查"];
+  if (/(BLOOD|SERUM|PLASMA|血)/.test(combined)) return ["抽血檢查", "其他生化項目"];
   return ["其他檢查項目", "其他檢查項目"];
 }
 
@@ -690,7 +690,7 @@ function makePdfReport(grouped) {
   }
 
   const footer = document.createElement("p");
-  footer.textContent = "本報告僅整理原始檢查資料，不提供診斷、判讀或醫療建議。";
+  footer.textContent = "本報告僅整理檢查結果，不提供診斷、判讀或醫療建議。";
   footer.style.cssText = "margin:8mm 0 0;padding-top:3mm;border-top:1px solid #d8e3e8;color:#6e808b;font-size:8px;text-align:center;";
   root.appendChild(footer);
 
@@ -776,7 +776,7 @@ generateButton.addEventListener("click", async () => {
   try {
     const { grouped, count } = getReportData();
     const blob = await makeDocx(grouped);
-    saveAs(blob, "檢查報告整理.docx");
+    saveAs(blob, "檢查報告整理-病人閱讀版.docx");
     setStatus(`完成：已整理 ${count} 個項目，Word 已開始下載。`, "success");
   } catch (error) {
     console.error(error);
@@ -845,7 +845,7 @@ pdfButton.addEventListener("click", async () => {
         sourceY += sliceHeight;
         pageIndex += 1;
       }
-      pdf.save("檢查報告整理.pdf");
+      pdf.save("檢查報告整理-病人閱讀版.pdf");
     } finally {
       document.documentElement.style.overflow = previousOverflow;
       report.remove();
