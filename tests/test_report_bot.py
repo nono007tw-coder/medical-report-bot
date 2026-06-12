@@ -10,6 +10,33 @@ from report_writer import write_report
 
 
 class ParserTests(unittest.TestCase):
+    def test_hospital_tabular_format(self):
+        text = """檢體　　：
+(Specimen type)\tBlood
+醫囑名稱：
+(Medical order)\tNA,K,Ca,P,Crea,BUN,CRP,ALT,Bil-T,Alb,
+項目\tH/L\t結果\t前次結果\t單位\t參考值
+BUN\t H  \t 34  \t(  )\t mg/dL \t 6~20 mg/dL
+Na\t L  \t 133  \t(  )\t mmol/L \t 136~145 mmol/L
+K\t   \t 4.3 \t(  )\t mmol/L \t 3.5~5.1 mmol/L
+"""
+        items = parse_text(text)
+
+        self.assertEqual([item.raw_name for item in items], ["BUN", "Na", "K"])
+        self.assertEqual(items[0].specimen, "Blood")
+        self.assertEqual(
+            (items[0].flag, items[0].result, items[0].unit, items[0].reference),
+            ("H", "34", "mg/dL", "6~20 mg/dL"),
+        )
+        self.assertEqual(
+            (items[1].flag, items[1].result, items[1].unit, items[1].reference),
+            ("L", "133", "mmol/L", "136~145 mmol/L"),
+        )
+        self.assertEqual(
+            (items[2].flag, items[2].result, items[2].unit, items[2].reference),
+            ("", "4.3", "mmol/L", "3.5~5.1 mmol/L"),
+        )
+
     def test_pipe_format_and_parentheses(self):
         items = parse_text("SPECIMEN: BLOOD\nCreatinine | ( 2.10 ) | mg/dL | 0.5-1.1 | H")
         self.assertEqual(items[0].result, "2.10")

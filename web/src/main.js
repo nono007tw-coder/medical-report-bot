@@ -54,6 +54,17 @@ Abdominal Sonography
 Finding: Liver is normal in size.
 Impression: Mild fatty liver.`;
 
+const HOSPITAL_SAMPLE = `檢體　　：
+(Specimen type)	Blood
+醫囑名稱：
+(Medical order)	NA,K,Ca,P,Crea,BUN,CRP,ALT,Bil-T,Alb,
+項目	H/L	結果	前次結果	單位	參考值
+BUN	 H  	 34  	(  )	 mg/dL 	 6~20 mg/dL
+Na	 L  	 133  	(  )	 mmol/L 	 136~145 mmol/L
+K	    	 4.3 	(  )	 mmol/L 	 3.5~5.1 mmol/L
+Creat	 H  	 6.34 	(  )	 mg/dL 	 M:0.7~1.2; F:0.5-0.9 mg/dL
+ALT	    	 15 	(  )	 U/L 	 M:<41; F:<33 U/L`;
+
 const aliasIndex = new Map();
 for (const [canonical, item] of Object.entries(mapping)) {
   for (const alias of [canonical, ...item.aliases]) aliasIndex.set(normalize(alias), canonical);
@@ -78,10 +89,41 @@ function parseText(text) {
   const lines = text.replace(/\r\n?/g, "\n").split("\n");
   const items = [];
   let specimen = "";
+  let awaitingSpecimen = false;
 
   for (let index = 0; index < lines.length;) {
     const line = lines[index].trim();
     if (!line) {
+      index += 1;
+      continue;
+    }
+
+    if (/^(?:檢體|檢體類別|檢體來源)\s*[:：]\s*$/i.test(line)) {
+      awaitingSpecimen = true;
+      index += 1;
+      continue;
+    }
+
+    const bilingualSpecimen = line.match(/^\(\s*Specimen\s*type\s*\)\s*(?:\t+|\s{2,})(.+)$/i);
+    if (bilingualSpecimen) {
+      specimen = bilingualSpecimen[1].trim();
+      awaitingSpecimen = false;
+      index += 1;
+      continue;
+    }
+
+    if (awaitingSpecimen && line) {
+      specimen = line.replace(/^\(\s*Specimen\s*type\s*\)\s*/i, "").trim();
+      awaitingSpecimen = false;
+      index += 1;
+      continue;
+    }
+
+    if (
+      /^(?:醫囑名稱)\s*[:：]\s*$/i.test(line) ||
+      /^\(\s*Medical\s*order\s*\)/i.test(line) ||
+      /^(?:項目|Item)\s*(?:\t|\|)/i.test(line)
+    ) {
       index += 1;
       continue;
     }
@@ -152,6 +194,23 @@ function parseResultLine(line, specimen) {
     const delimiter = line.includes("|") ? "|" : "\t";
     const parts = line.split(delimiter).map((part) => part.trim());
     if (parts.length < 2) return null;
+
+    if (
+      delimiter === "\t" &&
+      parts.length >= 6 &&
+      (["H", "L"].includes(parts[1].toUpperCase()) || parts[1] === "")
+    ) {
+      return item(
+        parts[0],
+        cleanResult(parts[2]),
+        parts[4] || "",
+        parts.slice(5).filter(Boolean).join(" "),
+        parts[1].toUpperCase(),
+        specimen,
+        line,
+      );
+    }
+
     let result = cleanResult(parts[1]);
     let flag = ["H", "L"].includes(parts[4]?.toUpperCase()) ? parts[4].toUpperCase() : "";
     [result, flag] = splitFlag(result, flag);
@@ -342,9 +401,10 @@ function makePdfReport(grouped) {
   const root = document.createElement("div");
   root.className = "pdf-report";
   root.style.cssText = `
-    position: fixed; left: -10000px; top: 0; width: 190mm;
-    padding: 10mm 9mm; color: #17304c; background: #fff;
+    position: absolute; left: 0; top: 0; z-index: -1000; width: 190mm;
+    padding: 8mm 8mm 10mm; color: #17304c; background: #fff;
     font-family: "Microsoft JhengHei", "Noto Sans TC", Arial, sans-serif;
+    font-size: 10px; line-height: 1.45;
   `;
 
   const title = document.createElement("div");
@@ -362,7 +422,7 @@ function makePdfReport(grouped) {
 
     for (const [category, rows] of Object.entries(categories)) {
       const categoryBlock = document.createElement("div");
-      categoryBlock.style.cssText = "margin:0 0 6mm;break-inside:avoid;";
+      categoryBlock.style.cssText = "margin:0 0 6mm;";
       categoryBlock.innerHTML = `<h3 style="font-size:13px;color:#174e78;margin:0 0 2.5mm;">${escapeHtml(category)}</h3>`;
 
       const isImage = section === "影像檢查";
@@ -370,7 +430,7 @@ function makePdfReport(grouped) {
         ? ["中文檢查項目", "English", "檢查結果"]
         : ["中文項目", "English", "結果", "正常值"];
       const table = document.createElement("table");
-      table.style.cssText = "width:100%;border-collapse:collapse;table-layout:fixed;font-size:9px;";
+      table.style.cssText = "width:100%;border-collapse:collapse;table-layout:fixed;font-size:9px;break-inside:auto;";
       const headerWidths = isImage ? ["25%", "27%", "48%"] : ["22%", "34%", "20%", "24%"];
       table.innerHTML = `
         <thead><tr>${headers.map((header, index) =>
@@ -432,7 +492,7 @@ fileInput.addEventListener("change", async () => {
 });
 
 document.querySelector("#sampleButton").addEventListener("click", () => {
-  sourceText.value = SAMPLE;
+  sourceText.value = HOSPITAL_SAMPLE;
   fileName.textContent = "示範資料";
   setStatus("已載入示範資料，可以產生 Word。");
 });
@@ -461,14 +521,24 @@ pdfButton.addEventListener("click", async () => {
     const { default: html2pdf } = await import("html2pdf.js");
     const report = makePdfReport(grouped);
     document.body.appendChild(report);
+    await document.fonts?.ready;
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     await html2pdf()
       .set({
-        margin: [5, 5, 5, 5],
+        margin: [7, 7, 8, 7],
         filename: "檢查報告整理.pdf",
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
+        image: { type: "jpeg", quality: 0.96 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: "#ffffff",
+          scrollX: 0,
+          scrollY: 0,
+          windowWidth: report.scrollWidth,
+          windowHeight: report.scrollHeight,
+        },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-        pagebreak: { mode: ["css", "legacy"], avoid: ["tr", "h2", "h3"] },
+        pagebreak: { mode: ["css", "legacy"], avoid: ["tr", "h2", "h3"], before: [".pdf-page-break"] },
       })
       .from(report)
       .save();

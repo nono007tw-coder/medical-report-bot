@@ -53,6 +53,20 @@ def _split_result_flag(result, flag=""):
 def _parse_delimited(line, specimen):
     delimiter = "|" if "|" in line else "\t"
     parts = [part.strip() for part in line.split(delimiter)]
+    if (
+        delimiter == "\t"
+        and len(parts) >= 6
+        and (parts[1].upper() in {"H", "L"} or not parts[1])
+    ):
+        return ParsedItem(
+            raw_name=parts[0],
+            result=_clean_result(parts[2]),
+            unit=parts[4],
+            reference=" ".join(part for part in parts[5:] if part),
+            flag=parts[1].upper(),
+            specimen=specimen,
+            raw_text=line,
+        )
     if len(parts) >= 2:
         name, result = parts[0], _clean_result(parts[1])
         unit = parts[2] if len(parts) > 2 else ""
@@ -112,10 +126,46 @@ def parse_text(text):
     specimen = ""
     lines = text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
     index = 0
+    awaiting_specimen = False
 
     while index < len(lines):
         line = lines[index].strip()
         if not line:
+            index += 1
+            continue
+
+        if re.match(r"^(?:檢體|檢體類別|檢體來源)\s*[:：]\s*$", line, re.I):
+            awaiting_specimen = True
+            index += 1
+            continue
+
+        bilingual_specimen = re.match(
+            r"^\(\s*Specimen\s*type\s*\)\s*(?:\t+|\s{2,})(.+)$",
+            line,
+            re.I,
+        )
+        if bilingual_specimen:
+            specimen = bilingual_specimen.group(1).strip()
+            awaiting_specimen = False
+            index += 1
+            continue
+
+        if awaiting_specimen:
+            specimen = re.sub(
+                r"^\(\s*Specimen\s*type\s*\)\s*",
+                "",
+                line,
+                flags=re.I,
+            ).strip()
+            awaiting_specimen = False
+            index += 1
+            continue
+
+        if (
+            re.match(r"^醫囑名稱\s*[:：]\s*$", line, re.I)
+            or re.match(r"^\(\s*Medical\s*order\s*\)", line, re.I)
+            or re.match(r"^(?:項目|Item)\s*(?:\t|\|)", line, re.I)
+        ):
             index += 1
             continue
 
