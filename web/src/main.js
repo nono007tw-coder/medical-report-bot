@@ -289,6 +289,146 @@ function unknownLocation(source) {
   return ["其他檢查項目", "其他檢查項目"];
 }
 
+let reviewRows = [];
+let reviewedSource = "";
+
+function buildReviewRows(items) {
+  const seen = new Set();
+  return items.map((source, position) => {
+    const canonical = aliasIndex.get(normalize(source.rawName));
+    const mapped = canonical ? mapping[canonical] : null;
+    const [section, category] = mapped
+      ? [mapped.section, mapped.category]
+      : unknownLocation(source);
+    const dedupeKey = canonical || normalize(source.rawName) || `unknown-${position}`;
+    const isDuplicate = seen.has(dedupeKey);
+    seen.add(dedupeKey);
+    const hasContent = Boolean(
+      source.isImage ||
+      source.result.trim() ||
+      source.unit.trim() ||
+      source.reference.trim(),
+    );
+    const warnings = [];
+    if (!mapped) warnings.push("未辨識項目");
+    if (!hasContent) warnings.push("沒有結果");
+    if (isDuplicate) warnings.push("重複項目");
+
+    return {
+      id: position,
+      included: hasContent && !isDuplicate,
+      warning: warnings.length > 0,
+      warningText: warnings.join("、"),
+      key: canonical || source.rawName,
+      zh: mapped?.zh || source.rawName,
+      en: mapped?.en || "",
+      result: source.result,
+      unit: source.unit,
+      reference: source.reference,
+      flag: source.flag,
+      rawText: source.rawText,
+      isImage: source.isImage || section === "影像檢查",
+      section,
+      category,
+      order: mapped?.order ?? 99999 + position,
+    };
+  });
+}
+
+function groupReviewRows(rows) {
+  const grouped = {};
+  for (const row of rows.filter((entry) => entry.included)) {
+    grouped[row.section] ??= {};
+    grouped[row.section][row.category] ??= [];
+    grouped[row.section][row.category].push({ ...row });
+  }
+
+  const ordered = {};
+  for (const section of SECTION_ORDER) {
+    if (!grouped[section]) continue;
+    ordered[section] = {};
+    for (const category of CATEGORY_ORDER[section]) {
+      const rowsInCategory = grouped[section][category];
+      if (rowsInCategory?.length) {
+        ordered[section][category] = rowsInCategory.sort((a, b) => a.order - b.order);
+      }
+    }
+  }
+  return ordered;
+}
+
+function renderPreview() {
+  previewBody.replaceChildren();
+  for (const row of reviewRows) {
+    const tr = document.createElement("tr");
+    if (row.warning) tr.className = "warning-row";
+
+    const includeCell = document.createElement("td");
+    const include = document.createElement("input");
+    include.type = "checkbox";
+    include.className = "preview-check";
+    include.checked = row.included;
+    include.dataset.id = row.id;
+    include.dataset.field = "included";
+    includeCell.appendChild(include);
+    tr.appendChild(includeCell);
+
+    for (const field of ["zh", "result", "unit", "reference"]) {
+      const td = document.createElement("td");
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = row[field];
+      input.dataset.id = row.id;
+      input.dataset.field = field;
+      input.setAttribute("aria-label", field);
+      td.appendChild(input);
+      tr.appendChild(td);
+    }
+
+    const flagCell = document.createElement("td");
+    const flagSelect = document.createElement("select");
+    flagSelect.dataset.id = row.id;
+    flagSelect.dataset.field = "flag";
+    for (const [value, label] of [["", "正常"], ["H", "H"], ["L", "L"]]) {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = label;
+      option.selected = row.flag === value;
+      flagSelect.appendChild(option);
+    }
+    flagCell.appendChild(flagSelect);
+    tr.appendChild(flagCell);
+
+    const statusCell = document.createElement("td");
+    const badge = document.createElement("span");
+    badge.className = `preview-status ${row.warning ? "warning" : "ok"}`;
+    badge.textContent = row.warning ? row.warningText : "可使用";
+    statusCell.appendChild(badge);
+    tr.appendChild(statusCell);
+    previewBody.appendChild(tr);
+  }
+
+  updatePreviewSummary();
+}
+
+function updatePreviewSummary() {
+  const included = reviewRows.filter((row) => row.included).length;
+  const warnings = reviewRows.filter((row) => row.warning).length;
+  previewSummary.textContent = `共辨識 ${reviewRows.length} 列，目前輸出 ${included} 列；${warnings} 列建議確認。`;
+  const canDownload = included > 0;
+  generateButton.disabled = !canDownload;
+  pdfButton.disabled = !canDownload;
+}
+
+function invalidatePreview(message = "內容已變更，請重新按「整理並預覽」。") {
+  reviewedSource = "";
+  reviewRows = [];
+  previewPanel.hidden = true;
+  generateButton.disabled = true;
+  pdfButton.disabled = true;
+  setStatus(message);
+}
+
 const border = { style: BorderStyle.SINGLE, size: 4, color: "7F8C99" };
 const borders = { top: border, bottom: border, left: border, right: border, insideHorizontal: border, insideVertical: border };
 
@@ -360,7 +500,7 @@ function imageTable(rows) {
   });
 }
 
-async function makeDocx(grouped) {
+async function makeDocx(grouped, originalText = "") {
   const children = [
     new Paragraph({
       alignment: AlignmentType.CENTER,
@@ -376,6 +516,20 @@ async function makeDocx(grouped) {
       children.push(section === "影像檢查" ? imageTable(rows) : labTable(rows));
       children.push(new Paragraph({ text: "", spacing: { after: 80 } }));
     }
+  }
+
+  if (originalText) {
+    children.push(new Paragraph({ text: "原始資料", heading: HeadingLevel.HEADING_1 }));
+    children.push(new Paragraph({
+      spacing: { before: 80, after: 80, line: 240 },
+      children: [new TextRun({
+        text: originalText,
+        size: 16,
+        font: "Consolas",
+        eastAsia: "Microsoft JhengHei",
+        break: 1,
+      })],
+    }));
   }
 
   const document = new Document({
@@ -408,7 +562,7 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
-function makePdfReport(grouped) {
+function makePdfReport(grouped, originalText = "") {
   const root = document.createElement("div");
   root.className = "pdf-report";
   root.style.cssText = `
@@ -473,19 +627,35 @@ function makePdfReport(grouped) {
   footer.textContent = "本報告僅整理原始檢查資料，不提供診斷、判讀或醫療建議。";
   footer.style.cssText = "margin:8mm 0 0;padding-top:3mm;border-top:1px solid #d8e3e8;color:#6e808b;font-size:8px;text-align:center;";
   root.appendChild(footer);
+
+  if (originalText) {
+    const original = document.createElement("section");
+    original.style.cssText = "margin:10mm 0 0;padding-top:6mm;border-top:1px solid #bfd0d8;";
+    original.innerHTML = `
+      <h2 style="font-size:18px;color:#174e78;margin:0 0 4mm;">原始資料</h2>
+      <pre style="margin:0;padding:4mm;white-space:pre-wrap;overflow-wrap:anywhere;color:#304f5e;background:#f5f8f9;border:1px solid #d8e3e8;border-radius:2mm;font:8px/1.55 Consolas,'Microsoft JhengHei',monospace;">${escapeHtml(originalText)}</pre>`;
+    root.insertBefore(original, footer);
+  }
   return root;
 }
 
 function getReportData() {
   const text = sourceText.value.trim();
   if (!text) throw new Error("請先選擇文字檔或貼上內容");
-  const grouped = classify(parseText(text));
+  if (!reviewedSource || reviewedSource !== text) {
+    throw new Error("內容尚未預覽，請先按「整理並預覽」");
+  }
+  const grouped = groupReviewRows(reviewRows);
   const count = Object.values(grouped).reduce(
     (total, categories) => total + Object.values(categories).reduce((sum, rows) => sum + rows.length, 0),
     0,
   );
   if (!count) throw new Error("找不到可整理的內容");
-  return { grouped, count };
+  return {
+    grouped,
+    count,
+    originalText: includeOriginal.checked ? text : "",
+  };
 }
 
 const fileInput = document.querySelector("#fileInput");
@@ -494,27 +664,66 @@ const sourceText = document.querySelector("#sourceText");
 const status = document.querySelector("#status");
 const generateButton = document.querySelector("#generateButton");
 const pdfButton = document.querySelector("#pdfButton");
+const previewButton = document.querySelector("#previewButton");
+const previewPanel = document.querySelector("#previewPanel");
+const previewBody = document.querySelector("#previewBody");
+const previewSummary = document.querySelector("#previewSummary");
+const includeOriginal = document.querySelector("#includeOriginal");
 
 fileInput.addEventListener("change", async () => {
   const file = fileInput.files[0];
   if (!file) return;
   fileName.textContent = file.name;
   sourceText.value = await file.text();
-  setStatus(`已載入 ${file.name}，可以產生 Word。`);
+  invalidatePreview(`已載入 ${file.name}，請按「整理並預覽」。`);
 });
 
 document.querySelector("#sampleButton").addEventListener("click", () => {
   sourceText.value = HOSPITAL_SAMPLE;
   fileName.textContent = "示範資料";
-  setStatus("已載入示範資料，可以產生 Word。");
+  invalidatePreview("已載入示範資料，請按「整理並預覽」。");
+});
+
+sourceText.addEventListener("input", () => invalidatePreview());
+
+previewButton.addEventListener("click", () => {
+  const text = sourceText.value.trim();
+  if (!text) {
+    setStatus("請先選擇文字檔或貼上內容。", "error");
+    return;
+  }
+  reviewRows = buildReviewRows(parseText(text));
+  reviewedSource = text;
+  renderPreview();
+  previewPanel.hidden = false;
+  previewPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+  setStatus("預覽已建立。請確認黃色項目及各欄內容。", "success");
+});
+
+previewBody.addEventListener("input", (event) => {
+  const control = event.target.closest("[data-id][data-field]");
+  if (!control) return;
+  const row = reviewRows.find((entry) => entry.id === Number(control.dataset.id));
+  if (!row) return;
+  row[control.dataset.field] = control.type === "checkbox" ? control.checked : control.value;
+  updatePreviewSummary();
+});
+
+previewBody.addEventListener("change", (event) => {
+  const control = event.target.closest("[data-id][data-field]");
+  if (!control) return;
+  const row = reviewRows.find((entry) => entry.id === Number(control.dataset.id));
+  if (!row) return;
+  row[control.dataset.field] = control.type === "checkbox" ? control.checked : control.value;
+  updatePreviewSummary();
 });
 
 generateButton.addEventListener("click", async () => {
   generateButton.disabled = true;
   setStatus("正在整理並製作 Word，請稍候...");
   try {
-    const { grouped, count } = getReportData();
-    const blob = await makeDocx(grouped);
+    const { grouped, count, originalText } = getReportData();
+    const blob = await makeDocx(grouped, originalText);
     saveAs(blob, "檢查報告整理.docx");
     setStatus(`完成：已整理 ${count} 個項目，Word 已開始下載。`, "success");
   } catch (error) {
@@ -529,12 +738,12 @@ pdfButton.addEventListener("click", async () => {
   pdfButton.disabled = true;
   setStatus("正在整理並製作 PDF，請稍候...");
   try {
-    const { grouped, count } = getReportData();
+    const { grouped, count, originalText } = getReportData();
     const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
       import("html2canvas"),
       import("jspdf"),
     ]);
-    const report = makePdfReport(grouped);
+    const report = makePdfReport(grouped, originalText);
     document.body.appendChild(report);
     const previousOverflow = document.documentElement.style.overflow;
     document.documentElement.style.overflow = "hidden";

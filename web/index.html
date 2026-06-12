@@ -70,7 +70,7 @@
             <div class="steps" aria-label="操作步驟">
               <span class="active"><b>01</b>加入資料</span>
               <i></i>
-              <span><b>02</b>自動整理</span>
+              <span><b>02</b>預覽校正</span>
               <i></i>
               <span><b>03</b>下載報告</span>
             </div>
@@ -109,17 +109,62 @@ Hb | 10.2 | g/dL | 12.0-16.0 | L"></textarea>
             </div>
           </div>
 
+          <div class="review-trigger">
+            <div>
+              <strong>先檢查，再下載</strong>
+              <p>系統會把辨識結果列成表格；黃色項目代表建議人工確認。</p>
+            </div>
+            <button id="previewButton" class="review-button" type="button">
+              整理並預覽
+            </button>
+          </div>
+
+          <section id="previewPanel" class="preview-panel" hidden>
+            <div class="preview-head">
+              <div>
+                <p class="section-kicker">REVIEW BEFORE EXPORT</p>
+                <h3>解析結果預覽</h3>
+                <p id="previewSummary">請確認欄位內容後再下載報告。</p>
+              </div>
+              <label class="original-option">
+                <input id="includeOriginal" type="checkbox" checked>
+                <span>報告末尾附上完整原文</span>
+              </label>
+            </div>
+            <div class="preview-legend">
+              <span><i class="legend-ok"></i>可直接使用</span>
+              <span><i class="legend-warning"></i>建議人工確認</span>
+            </div>
+            <div class="preview-scroll">
+              <table class="preview-table">
+                <thead>
+                  <tr>
+                    <th>輸出</th>
+                    <th>項目</th>
+                    <th>結果</th>
+                    <th>單位</th>
+                    <th>參考值</th>
+                    <th>H/L</th>
+                    <th>狀態</th>
+                  </tr>
+                </thead>
+                <tbody id="previewBody"></tbody>
+              </table>
+            </div>
+            <p class="preview-note">修改會直接套用到 PDF 與 Word；原始貼上內容不會被改動。</p>
+          </section>
+
           <div class="action-bar">
             <div class="status-wrap">
               <span class="status-icon" aria-hidden="true">i</span>
               <p id="status" class="status" role="status" aria-live="polite">請先選擇文字檔或貼上內容。</p>
             </div>
             <div class="download-actions">
-              <button id="pdfButton" class="pdf-button" type="button">
+              <button id="pdfButton" class="pdf-button" type="button" disabled>
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h7l4 4V20a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1Z"/><path d="M14 3.5V8h4M9 13h6M9 16h4"/></svg>
                 <span>下載 PDF</span>
               </button>
-              <button id="generateButton" class="primary" type="button">
+              <button id="generateButton" class="primary" type="button" disabled>
                 <span>下載 Word</span>
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5"/></svg>
               </button>
