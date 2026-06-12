@@ -40,6 +40,17 @@ const CATEGORY_ORDER = {
   ],
   其他檢查項目: ["其他檢查項目"],
 };
+const REPORT_GROUP_ORDER = ["1. 血液", "2. 生化", "3. 尿液", "4. 影像"];
+const HEMATOLOGY_CATEGORIES = new Set(["血液常規檢查", "凝血功能檢查"]);
+const REPORT_CATEGORY_ORDER = {
+  "1. 血液": ["血液常規檢查", "凝血功能檢查", "其他血液檢查"],
+  "2. 生化": [
+    ...CATEGORY_ORDER.抽血檢查.filter((category) => !HEMATOLOGY_CATEGORIES.has(category)),
+    "其他生化檢查",
+  ],
+  "3. 尿液": CATEGORY_ORDER.驗尿檢查,
+  "4. 影像": CATEGORY_ORDER.影像檢查,
+};
 
 const SAMPLE = `SPECIMEN: BLOOD
 WBC | 7.51 | 10^3/uL | 4.0-10.0 |
@@ -290,6 +301,29 @@ function unknownLocation(source) {
   return ["其他檢查項目", "其他檢查項目"];
 }
 
+function inferReportGroup(section, category, source) {
+  if (section === "影像檢查" || source.isImage) return "4. 影像";
+  if (section === "驗尿檢查") return "3. 尿液";
+  if (section === "抽血檢查" && HEMATOLOGY_CATEGORIES.has(category)) return "1. 血液";
+  if (section === "抽血檢查") return "2. 生化";
+
+  const name = normalize(source.rawName);
+  if (/^(wbc|rbc|hb|hgb|hct|mcv|mch|mchc|rdwcv|mpv|plt|platelet|anc|band|neu|lym|mono|eos|baso|pt|inr|aptt|ddimer)$/.test(name)) {
+    return "1. 血液";
+  }
+  if (`${source.specimen} ${source.rawName}`.toUpperCase().includes("URINE")) return "3. 尿液";
+  return "2. 生化";
+}
+
+function categoryForGroup(row) {
+  const allowed = REPORT_CATEGORY_ORDER[row.reportGroup];
+  if (allowed.includes(row.category)) return row.category;
+  if (row.reportGroup === "1. 血液") return "其他血液檢查";
+  if (row.reportGroup === "2. 生化") return "其他生化檢查";
+  if (row.reportGroup === "3. 尿液") return "其他尿液檢查";
+  return "其他影像檢查";
+}
+
 let reviewRows = [];
 let reviewedSource = "";
 let previewTimer;
@@ -302,6 +336,7 @@ function buildReviewRows(items) {
     const [section, category] = mapped
       ? [mapped.section, mapped.category]
       : unknownLocation(source);
+    const reportGroup = inferReportGroup(section, category, source);
     const dedupeKey = canonical || normalize(source.rawName) || `unknown-${position}`;
     const isDuplicate = seen.has(dedupeKey);
     seen.add(dedupeKey);
@@ -319,7 +354,7 @@ function buildReviewRows(items) {
 
     return {
       id: position,
-      included: hasContent && !isDuplicate,
+      included: hasContent,
       warning: warnings.length > 0,
       warningText: warnings.join("、"),
       key: canonical || source.rawName,
@@ -333,6 +368,7 @@ function buildReviewRows(items) {
       isImage: source.isImage || section === "影像檢查",
       section,
       category,
+      reportGroup,
       order: mapped?.order ?? 99999 + position,
     };
   }).filter(Boolean);
@@ -341,19 +377,22 @@ function buildReviewRows(items) {
 function groupReviewRows(rows) {
   const grouped = {};
   for (const row of rows.filter((entry) => entry.included)) {
-    grouped[row.section] ??= {};
-    grouped[row.section][row.category] ??= [];
-    grouped[row.section][row.category].push({ ...row });
+    const category = categoryForGroup(row);
+    grouped[row.reportGroup] ??= {};
+    grouped[row.reportGroup][category] ??= [];
+    grouped[row.reportGroup][category].push({ ...row, category });
   }
 
   const ordered = {};
-  for (const section of SECTION_ORDER) {
-    if (!grouped[section]) continue;
-    ordered[section] = {};
-    for (const category of CATEGORY_ORDER[section]) {
-      const rowsInCategory = grouped[section][category];
+  for (const reportGroup of REPORT_GROUP_ORDER) {
+    if (!grouped[reportGroup]) continue;
+    ordered[reportGroup] = {};
+    for (const category of REPORT_CATEGORY_ORDER[reportGroup]) {
+      const rowsInCategory = grouped[reportGroup][category];
       if (rowsInCategory?.length) {
-        ordered[section][category] = rowsInCategory.sort((a, b) => a.order - b.order);
+        ordered[reportGroup][category] = rowsInCategory.sort(
+          (a, b) => a.order - b.order || a.id - b.id,
+        );
       }
     }
   }
@@ -375,6 +414,21 @@ function renderPreview() {
     include.dataset.field = "included";
     includeCell.appendChild(include);
     tr.appendChild(includeCell);
+
+    const groupCell = document.createElement("td");
+    const groupSelect = document.createElement("select");
+    groupSelect.dataset.id = row.id;
+    groupSelect.dataset.field = "reportGroup";
+    groupSelect.setAttribute("aria-label", "分類");
+    for (const group of REPORT_GROUP_ORDER) {
+      const option = document.createElement("option");
+      option.value = group;
+      option.textContent = group;
+      option.selected = row.reportGroup === group;
+      groupSelect.appendChild(option);
+    }
+    groupCell.appendChild(groupSelect);
+    tr.appendChild(groupCell);
 
     for (const field of ["zh", "result", "unit", "reference"]) {
       const td = document.createElement("td");
@@ -531,7 +585,7 @@ async function makeDocx(grouped, originalText = "") {
     children.push(new Paragraph({ text: section, heading: HeadingLevel.HEADING_1 }));
     for (const [category, rows] of Object.entries(categories)) {
       children.push(new Paragraph({ text: category, heading: HeadingLevel.HEADING_2 }));
-      children.push(section === "影像檢查" ? imageTable(rows) : labTable(rows));
+      children.push(section === "4. 影像" ? imageTable(rows) : labTable(rows));
       children.push(new Paragraph({ text: "", spacing: { after: 80 } }));
     }
   }
@@ -609,7 +663,7 @@ function makePdfReport(grouped, originalText = "") {
       categoryBlock.style.cssText = "margin:0 0 6mm;break-inside:auto;";
       categoryBlock.innerHTML = `<h3 style="font-size:13px;color:#174e78;margin:0 0 2.5mm;">${escapeHtml(category)}</h3>`;
 
-      const isImage = section === "影像檢查";
+      const isImage = section === "4. 影像";
       const headers = isImage
         ? ["中文檢查項目", "English", "檢查結果"]
         : ["中文項目", "English", "結果", "正常值"];
