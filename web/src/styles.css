@@ -165,12 +165,7 @@ textarea::placeholder { color: #9cabb1; }
 .preview-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
 .preview-head h3 { margin: 0; color: var(--navy-soft); font-size: 21px; }
 .preview-head > div > p:last-child { margin: 8px 0 0; color: #71848d; font-size: 11px; }
-.original-option {
-  display: flex; align-items: center; gap: 9px; padding: 10px 12px;
-  color: #45616c; background: white; border: 1px solid #d9e4e6;
-  border-radius: 10px; cursor: pointer; font-size: 11px; font-weight: 600;
-}
-.original-option input, .preview-check { accent-color: var(--teal-dark); }
+.preview-check { accent-color: var(--teal-dark); }
 .preview-legend { display: flex; gap: 18px; margin: 18px 0 12px; color: #71848d; font-size: 10px; }
 .preview-legend span { display: flex; align-items: center; gap: 6px; }
 .preview-legend i { width: 9px; height: 9px; border-radius: 50%; }

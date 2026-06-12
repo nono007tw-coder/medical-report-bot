@@ -40,16 +40,55 @@ const CATEGORY_ORDER = {
   ],
   其他檢查項目: ["其他檢查項目"],
 };
-const REPORT_GROUP_ORDER = ["1. 血液", "2. 生化", "3. 尿液", "4. 影像"];
+const REPORT_GROUP_ORDER = ["1. 血液檢查", "2. 生化檢查", "3. 尿液檢查", "4. 影像檢查"];
 const HEMATOLOGY_CATEGORIES = new Set(["血液常規檢查", "凝血功能檢查"]);
 const REPORT_CATEGORY_ORDER = {
-  "1. 血液": ["血液常規檢查", "凝血功能檢查", "其他血液檢查"],
-  "2. 生化": [
+  "1. 血液檢查": ["血液常規檢查", "凝血功能檢查", "其他血液檢查"],
+  "2. 生化檢查": [
     ...CATEGORY_ORDER.抽血檢查.filter((category) => !HEMATOLOGY_CATEGORIES.has(category)),
     "其他生化檢查",
   ],
-  "3. 尿液": CATEGORY_ORDER.驗尿檢查,
-  "4. 影像": CATEGORY_ORDER.影像檢查,
+  "3. 尿液檢查": CATEGORY_ORDER.驗尿檢查,
+  "4. 影像檢查": CATEGORY_ORDER.影像檢查,
+};
+const PATIENT_CATEGORY_LABELS = {
+  血液常規檢查: "血球與貧血",
+  凝血功能檢查: "凝血功能",
+  其他血液檢查: "其他血液項目",
+  肝膽功能檢查: "肝膽功能",
+  腎功能檢查: "腎臟功能",
+  腎臟特殊檢查: "腎臟特殊檢查",
+  電解質與酸鹼檢查: "電解質與酸鹼",
+  血糖與糖尿病相關檢查: "血糖與糖尿病",
+  血脂檢查: "血脂",
+  鐵質與貧血相關檢查: "鐵質與貧血",
+  維生素與營養檢查: "維生素與營養",
+  甲狀腺功能檢查: "甲狀腺功能",
+  骨礦物質與副甲狀腺檢查: "骨骼礦物質與副甲狀腺",
+  發炎與感染指標: "發炎與感染",
+  感染血清學檢查: "感染血清檢查",
+  心臟相關檢查: "心臟相關指標",
+  肌肉酵素檢查: "肌肉酵素",
+  自體免疫與風濕免疫檢查: "自體免疫與風濕",
+  免疫與特殊蛋白檢查: "免疫與特殊蛋白",
+  內分泌與荷爾蒙檢查: "內分泌與荷爾蒙",
+  腫瘤指標: "腫瘤指標",
+  胰臟功能檢查: "胰臟功能",
+  其他生化檢查: "其他生化項目",
+  尿液一般檢查: "尿液一般檢查",
+  尿蛋白與白蛋白: "尿蛋白與白蛋白",
+  尿沉渣: "尿液顯微鏡檢查",
+  尿液生化檢查: "尿液生化",
+  "24小時尿液檢查": "24 小時尿液",
+  其他尿液檢查: "其他尿液項目",
+  超音波檢查: "超音波",
+  "X 光檢查": "X 光",
+  電腦斷層檢查: "電腦斷層",
+  磁振造影檢查: "磁振造影",
+  骨質密度檢查: "骨質密度",
+  內視鏡檢查: "內視鏡",
+  心臟血管檢查: "心臟與血管",
+  其他影像檢查: "其他影像",
 };
 
 const SAMPLE = `SPECIMEN: BLOOD
@@ -302,25 +341,25 @@ function unknownLocation(source) {
 }
 
 function inferReportGroup(section, category, source) {
-  if (section === "影像檢查" || source.isImage) return "4. 影像";
-  if (section === "驗尿檢查") return "3. 尿液";
-  if (section === "抽血檢查" && HEMATOLOGY_CATEGORIES.has(category)) return "1. 血液";
-  if (section === "抽血檢查") return "2. 生化";
+  if (section === "影像檢查" || source.isImage) return "4. 影像檢查";
+  if (section === "驗尿檢查") return "3. 尿液檢查";
+  if (section === "抽血檢查" && HEMATOLOGY_CATEGORIES.has(category)) return "1. 血液檢查";
+  if (section === "抽血檢查") return "2. 生化檢查";
 
   const name = normalize(source.rawName);
   if (/^(wbc|rbc|hb|hgb|hct|mcv|mch|mchc|rdwcv|mpv|plt|platelet|anc|band|neu|lym|mono|eos|baso|pt|inr|aptt|ddimer)$/.test(name)) {
-    return "1. 血液";
+    return "1. 血液檢查";
   }
-  if (`${source.specimen} ${source.rawName}`.toUpperCase().includes("URINE")) return "3. 尿液";
-  return "2. 生化";
+  if (`${source.specimen} ${source.rawName}`.toUpperCase().includes("URINE")) return "3. 尿液檢查";
+  return "2. 生化檢查";
 }
 
 function categoryForGroup(row) {
   const allowed = REPORT_CATEGORY_ORDER[row.reportGroup];
   if (allowed.includes(row.category)) return row.category;
-  if (row.reportGroup === "1. 血液") return "其他血液檢查";
-  if (row.reportGroup === "2. 生化") return "其他生化檢查";
-  if (row.reportGroup === "3. 尿液") return "其他尿液檢查";
+  if (row.reportGroup === "1. 血液檢查") return "其他血液檢查";
+  if (row.reportGroup === "2. 生化檢查") return "其他生化檢查";
+  if (row.reportGroup === "3. 尿液檢查") return "其他尿液檢查";
   return "其他影像檢查";
 }
 
@@ -532,7 +571,7 @@ function labTable(rows) {
     rows: [
       new TableRow({
         tableHeader: true,
-        children: ["中文項目", "English", "結果", "正常值"].map((value, index) =>
+        children: ["中文項目", "英文項目", "結果", "正常值"].map((value, index) =>
           cell(value, widths[index], { header: true, bold: true, center: index >= 2 })
         ),
       }),
@@ -548,31 +587,7 @@ function labTable(rows) {
   });
 }
 
-function imageTable(rows) {
-  const widths = [2100, 2700, 4560];
-  return new Table({
-    width: { size: 9360, type: WidthType.DXA },
-    columnWidths: widths,
-    layout: TableLayoutType.FIXED,
-    rows: [
-      new TableRow({
-        tableHeader: true,
-        children: ["中文檢查項目", "English", "檢查結果"].map((value, index) =>
-          cell(value, widths[index], { header: true, bold: true, center: index === 2 })
-        ),
-      }),
-      ...rows.map((row) => new TableRow({
-        children: [
-          cell(row.zh, widths[0]),
-          cell(row.en, widths[1]),
-          cell(row.rawText || [row.result, row.unit].filter(Boolean).join(" "), widths[2]),
-        ],
-      })),
-    ],
-  });
-}
-
-async function makeDocx(grouped, originalText = "") {
+async function makeDocx(grouped) {
   const children = [
     new Paragraph({
       alignment: AlignmentType.CENTER,
@@ -584,24 +599,15 @@ async function makeDocx(grouped, originalText = "") {
   for (const [section, categories] of Object.entries(grouped)) {
     children.push(new Paragraph({ text: section, heading: HeadingLevel.HEADING_1 }));
     for (const [category, rows] of Object.entries(categories)) {
-      children.push(new Paragraph({ text: category, heading: HeadingLevel.HEADING_2 }));
-      children.push(section === "4. 影像" ? imageTable(rows) : labTable(rows));
+      children.push(new Paragraph({
+        text: PATIENT_CATEGORY_LABELS[category] || category,
+        heading: HeadingLevel.HEADING_2,
+      }));
+      children.push(labTable(rows.map((row) => row.isImage
+        ? { ...row, result: row.rawText, unit: "", reference: "" }
+        : row)));
       children.push(new Paragraph({ text: "", spacing: { after: 80 } }));
     }
-  }
-
-  if (originalText) {
-    children.push(new Paragraph({ text: "原始資料", heading: HeadingLevel.HEADING_1 }));
-    children.push(new Paragraph({
-      spacing: { before: 80, after: 80, line: 240 },
-      children: [new TextRun({
-        text: originalText,
-        size: 16,
-        font: "Consolas",
-        eastAsia: "Microsoft JhengHei",
-        break: 1,
-      })],
-    }));
   }
 
   const document = new Document({
@@ -634,7 +640,7 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
-function makePdfReport(grouped, originalText = "") {
+function makePdfReport(grouped) {
   const root = document.createElement("div");
   root.className = "pdf-report";
   root.style.cssText = `
@@ -661,34 +667,22 @@ function makePdfReport(grouped, originalText = "") {
     for (const [category, rows] of Object.entries(categories)) {
       const categoryBlock = document.createElement("div");
       categoryBlock.style.cssText = "margin:0 0 6mm;break-inside:auto;";
-      categoryBlock.innerHTML = `<h3 style="font-size:13px;color:#174e78;margin:0 0 2.5mm;">${escapeHtml(category)}</h3>`;
+      categoryBlock.innerHTML = `<h3 style="font-size:13px;color:#174e78;margin:0 0 2.5mm;">${escapeHtml(PATIENT_CATEGORY_LABELS[category] || category)}</h3>`;
 
-      const isImage = section === "4. 影像";
-      const headers = isImage
-        ? ["中文檢查項目", "English", "檢查結果"]
-        : ["中文項目", "English", "結果", "正常值"];
+      const headers = ["中文項目", "英文項目", "結果", "正常值"];
       const table = document.createElement("table");
       table.style.cssText = "width:100%;border-collapse:collapse;table-layout:fixed;font-size:9px;break-inside:auto;";
-      const headerWidths = isImage ? ["25%", "27%", "48%"] : ["22%", "34%", "20%", "24%"];
+      const headerWidths = ["22%", "34%", "20%", "24%"];
       table.innerHTML = `
         <thead style="display:table-header-group;"><tr>${headers.map((header, index) =>
           `<th style="width:${headerWidths[index]};padding:2.4mm 2mm;text-align:${index >= 2 ? "center" : "left"};background:#dcecf5;border:1px solid #8198a7;color:#173b55;font-weight:700;">${header}</th>`
         ).join("")}</tr></thead>
-        <tbody>${rows.map((row) => {
-          if (isImage) {
-            return `<tr>
-              <td style="padding:2.4mm 2mm;border:1px solid #8198a7;vertical-align:middle;">${escapeHtml(row.zh)}</td>
-              <td style="padding:2.4mm 2mm;border:1px solid #8198a7;vertical-align:middle;">${escapeHtml(row.en)}</td>
-              <td style="padding:2.4mm 2mm;border:1px solid #8198a7;vertical-align:top;white-space:pre-wrap;line-height:1.55;">${escapeHtml(row.rawText || [row.result, row.unit].filter(Boolean).join(" "))}</td>
-            </tr>`;
-          }
-          return `<tr>
+        <tbody>${rows.map((row) => `<tr>
             <td style="padding:2.4mm 2mm;border:1px solid #8198a7;">${escapeHtml(row.zh)}</td>
             <td style="padding:2.4mm 2mm;border:1px solid #8198a7;">${escapeHtml(row.en)}</td>
-            <td style="padding:2.4mm 2mm;border:1px solid #8198a7;text-align:center;font-weight:${["H", "L"].includes(row.flag) ? "700" : "400"};">${escapeHtml([row.result, row.unit].filter(Boolean).join(" "))}</td>
+            <td style="padding:2.4mm 2mm;border:1px solid #8198a7;text-align:${row.isImage ? "left" : "center"};white-space:${row.isImage ? "pre-wrap" : "normal"};font-weight:${["H", "L"].includes(row.flag) ? "700" : "400"};">${escapeHtml(row.isImage ? row.rawText : [row.result, row.unit].filter(Boolean).join(" "))}</td>
             <td style="padding:2.4mm 2mm;border:1px solid #8198a7;text-align:center;">${escapeHtml(row.reference)}</td>
-          </tr>`;
-        }).join("")}</tbody>`;
+          </tr>`).join("")}</tbody>`;
       categoryBlock.appendChild(table);
       sectionBlock.appendChild(categoryBlock);
     }
@@ -700,14 +694,6 @@ function makePdfReport(grouped, originalText = "") {
   footer.style.cssText = "margin:8mm 0 0;padding-top:3mm;border-top:1px solid #d8e3e8;color:#6e808b;font-size:8px;text-align:center;";
   root.appendChild(footer);
 
-  if (originalText) {
-    const original = document.createElement("section");
-    original.style.cssText = "margin:10mm 0 0;padding-top:6mm;border-top:1px solid #bfd0d8;";
-    original.innerHTML = `
-      <h2 style="font-size:18px;color:#174e78;margin:0 0 4mm;">原始資料</h2>
-      <pre style="margin:0;padding:4mm;white-space:pre-wrap;overflow-wrap:anywhere;color:#304f5e;background:#f5f8f9;border:1px solid #d8e3e8;border-radius:2mm;font:8px/1.55 Consolas,'Microsoft JhengHei',monospace;">${escapeHtml(originalText)}</pre>`;
-    root.insertBefore(original, footer);
-  }
   return root;
 }
 
@@ -726,7 +712,6 @@ function getReportData() {
   return {
     grouped,
     count,
-    originalText: includeOriginal.checked ? text : "",
   };
 }
 
@@ -740,7 +725,6 @@ const previewButton = document.querySelector("#previewButton");
 const previewPanel = document.querySelector("#previewPanel");
 const previewBody = document.querySelector("#previewBody");
 const previewSummary = document.querySelector("#previewSummary");
-const includeOriginal = document.querySelector("#includeOriginal");
 
 fileInput.addEventListener("change", async () => {
   const file = fileInput.files[0];
@@ -790,8 +774,8 @@ generateButton.addEventListener("click", async () => {
   generateButton.disabled = true;
   setStatus("正在整理並製作 Word，請稍候...");
   try {
-    const { grouped, count, originalText } = getReportData();
-    const blob = await makeDocx(grouped, originalText);
+    const { grouped, count } = getReportData();
+    const blob = await makeDocx(grouped);
     saveAs(blob, "檢查報告整理.docx");
     setStatus(`完成：已整理 ${count} 個項目，Word 已開始下載。`, "success");
   } catch (error) {
@@ -806,12 +790,12 @@ pdfButton.addEventListener("click", async () => {
   pdfButton.disabled = true;
   setStatus("正在整理並製作 PDF，請稍候...");
   try {
-    const { grouped, count, originalText } = getReportData();
+    const { grouped, count } = getReportData();
     const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
       import("html2canvas"),
       import("jspdf"),
     ]);
-    const report = makePdfReport(grouped, originalText);
+    const report = makePdfReport(grouped);
     document.body.appendChild(report);
     const previousOverflow = document.documentElement.style.overflow;
     document.documentElement.style.overflow = "hidden";
