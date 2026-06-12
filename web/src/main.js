@@ -329,11 +329,99 @@ async function makeDocx(grouped) {
   return Packer.toBlob(document);
 }
 
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function makePdfReport(grouped) {
+  const root = document.createElement("div");
+  root.className = "pdf-report";
+  root.style.cssText = `
+    position: fixed; left: -10000px; top: 0; width: 190mm;
+    padding: 10mm 9mm; color: #17304c; background: #fff;
+    font-family: "Microsoft JhengHei", "Noto Sans TC", Arial, sans-serif;
+  `;
+
+  const title = document.createElement("div");
+  title.innerHTML = `
+    <div style="text-align:center;margin:0 0 10mm;padding-bottom:5mm;border-bottom:1.5px solid #2f769d;">
+      <div style="font-size:9px;letter-spacing:2px;color:#198f82;margin-bottom:2mm;">MEDORA REPORT INTELLIGENCE</div>
+      <h1 style="font-size:24px;line-height:1.3;margin:0;color:#123d63;">檢查報告整理</h1>
+    </div>`;
+  root.appendChild(title);
+
+  for (const [section, categories] of Object.entries(grouped)) {
+    const sectionBlock = document.createElement("section");
+    sectionBlock.style.cssText = "margin:0 0 7mm;";
+    sectionBlock.innerHTML = `<h2 style="font-size:18px;color:#174e78;margin:0 0 4mm;">${escapeHtml(section)}</h2>`;
+
+    for (const [category, rows] of Object.entries(categories)) {
+      const categoryBlock = document.createElement("div");
+      categoryBlock.style.cssText = "margin:0 0 6mm;break-inside:avoid;";
+      categoryBlock.innerHTML = `<h3 style="font-size:13px;color:#174e78;margin:0 0 2.5mm;">${escapeHtml(category)}</h3>`;
+
+      const isImage = section === "影像檢查";
+      const headers = isImage
+        ? ["中文檢查項目", "English", "檢查結果"]
+        : ["中文項目", "English", "結果", "正常值"];
+      const table = document.createElement("table");
+      table.style.cssText = "width:100%;border-collapse:collapse;table-layout:fixed;font-size:9px;";
+      const headerWidths = isImage ? ["25%", "27%", "48%"] : ["22%", "34%", "20%", "24%"];
+      table.innerHTML = `
+        <thead><tr>${headers.map((header, index) =>
+          `<th style="width:${headerWidths[index]};padding:2.4mm 2mm;text-align:${index >= 2 ? "center" : "left"};background:#dcecf5;border:1px solid #8198a7;color:#173b55;font-weight:700;">${header}</th>`
+        ).join("")}</tr></thead>
+        <tbody>${rows.map((row) => {
+          if (isImage) {
+            return `<tr>
+              <td style="padding:2.4mm 2mm;border:1px solid #8198a7;vertical-align:middle;">${escapeHtml(row.zh)}</td>
+              <td style="padding:2.4mm 2mm;border:1px solid #8198a7;vertical-align:middle;">${escapeHtml(row.en)}</td>
+              <td style="padding:2.4mm 2mm;border:1px solid #8198a7;vertical-align:top;white-space:pre-wrap;line-height:1.55;">${escapeHtml(row.rawText || [row.result, row.unit].filter(Boolean).join(" "))}</td>
+            </tr>`;
+          }
+          return `<tr>
+            <td style="padding:2.4mm 2mm;border:1px solid #8198a7;">${escapeHtml(row.zh)}</td>
+            <td style="padding:2.4mm 2mm;border:1px solid #8198a7;">${escapeHtml(row.en)}</td>
+            <td style="padding:2.4mm 2mm;border:1px solid #8198a7;text-align:center;font-weight:${["H", "L"].includes(row.flag) ? "700" : "400"};">${escapeHtml([row.result, row.unit].filter(Boolean).join(" "))}</td>
+            <td style="padding:2.4mm 2mm;border:1px solid #8198a7;text-align:center;">${escapeHtml(row.reference)}</td>
+          </tr>`;
+        }).join("")}</tbody>`;
+      categoryBlock.appendChild(table);
+      sectionBlock.appendChild(categoryBlock);
+    }
+    root.appendChild(sectionBlock);
+  }
+
+  const footer = document.createElement("p");
+  footer.textContent = "本報告僅整理原始檢查資料，不提供診斷、判讀或醫療建議。";
+  footer.style.cssText = "margin:8mm 0 0;padding-top:3mm;border-top:1px solid #d8e3e8;color:#6e808b;font-size:8px;text-align:center;";
+  root.appendChild(footer);
+  return root;
+}
+
+function getReportData() {
+  const text = sourceText.value.trim();
+  if (!text) throw new Error("請先選擇文字檔或貼上內容");
+  const grouped = classify(parseText(text));
+  const count = Object.values(grouped).reduce(
+    (total, categories) => total + Object.values(categories).reduce((sum, rows) => sum + rows.length, 0),
+    0,
+  );
+  if (!count) throw new Error("找不到可整理的內容");
+  return { grouped, count };
+}
+
 const fileInput = document.querySelector("#fileInput");
 const fileName = document.querySelector("#fileName");
 const sourceText = document.querySelector("#sourceText");
 const status = document.querySelector("#status");
 const generateButton = document.querySelector("#generateButton");
+const pdfButton = document.querySelector("#pdfButton");
 
 fileInput.addEventListener("change", async () => {
   const file = fileInput.files[0];
@@ -350,21 +438,10 @@ document.querySelector("#sampleButton").addEventListener("click", () => {
 });
 
 generateButton.addEventListener("click", async () => {
-  const text = sourceText.value.trim();
-  if (!text) {
-    setStatus("請先選擇文字檔或貼上內容。", "error");
-    return;
-  }
-
   generateButton.disabled = true;
   setStatus("正在整理並製作 Word，請稍候...");
   try {
-    const grouped = classify(parseText(text));
-    const count = Object.values(grouped).reduce(
-      (total, categories) => total + Object.values(categories).reduce((sum, rows) => sum + rows.length, 0),
-      0,
-    );
-    if (!count) throw new Error("找不到可整理的內容");
+    const { grouped, count } = getReportData();
     const blob = await makeDocx(grouped);
     saveAs(blob, "檢查報告整理.docx");
     setStatus(`完成：已整理 ${count} 個項目，Word 已開始下載。`, "success");
@@ -373,6 +450,36 @@ generateButton.addEventListener("click", async () => {
     setStatus(`無法產生報告：${error.message}`, "error");
   } finally {
     generateButton.disabled = false;
+  }
+});
+
+pdfButton.addEventListener("click", async () => {
+  pdfButton.disabled = true;
+  setStatus("正在整理並製作 PDF，請稍候...");
+  try {
+    const { grouped, count } = getReportData();
+    const { default: html2pdf } = await import("html2pdf.js");
+    const report = makePdfReport(grouped);
+    document.body.appendChild(report);
+    await html2pdf()
+      .set({
+        margin: [5, 5, 5, 5],
+        filename: "檢查報告整理.pdf",
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        pagebreak: { mode: ["css", "legacy"], avoid: ["tr", "h2", "h3"] },
+      })
+      .from(report)
+      .save();
+    report.remove();
+    setStatus(`完成：已整理 ${count} 個項目，PDF 已開始下載。`, "success");
+  } catch (error) {
+    console.error(error);
+    document.querySelector(".pdf-report")?.remove();
+    setStatus(`無法產生 PDF：${error.message}`, "error");
+  } finally {
+    pdfButton.disabled = false;
   }
 });
 
