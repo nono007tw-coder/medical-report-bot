@@ -166,6 +166,7 @@ def parse_text(text):
             re.match(r"^醫囑名稱\s*[:：]\s*$", line, re.I)
             or re.match(r"^\(\s*Medical\s*order\s*\)", line, re.I)
             or re.match(r"^(?:項目|Item)\s*(?:\t|\|)", line, re.I)
+            or re.match(r"^DC\s*[:：]\s*%?\s*(?:\t.*)?$", line, re.I)
         ):
             index += 1
             continue

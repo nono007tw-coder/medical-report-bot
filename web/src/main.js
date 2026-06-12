@@ -123,7 +123,8 @@ function parseText(text) {
     if (
       /^(?:醫囑名稱)\s*[:：]\s*$/i.test(line) ||
       /^\(\s*Medical\s*order\s*\)/i.test(line) ||
-      /^(?:項目|Item)\s*(?:\t|\|)/i.test(line)
+      /^(?:項目|Item)\s*(?:\t|\|)/i.test(line) ||
+      /^DC\s*[:：]\s*%?\s*(?:\t.*)?$/i.test(line)
     ) {
       index += 1;
       continue;
@@ -291,6 +292,7 @@ function unknownLocation(source) {
 
 let reviewRows = [];
 let reviewedSource = "";
+let previewTimer;
 
 function buildReviewRows(items) {
   const seen = new Set();
@@ -309,6 +311,7 @@ function buildReviewRows(items) {
       source.unit.trim() ||
       source.reference.trim(),
     );
+    if (mapped && !hasContent) return null;
     const warnings = [];
     if (!mapped) warnings.push("未辨識項目");
     if (!hasContent) warnings.push("沒有結果");
@@ -332,7 +335,7 @@ function buildReviewRows(items) {
       category,
       order: mapped?.order ?? 99999 + position,
     };
-  });
+  }).filter(Boolean);
 }
 
 function groupReviewRows(rows) {
@@ -427,6 +430,21 @@ function invalidatePreview(message = "內容已變更，請重新按「整理並
   generateButton.disabled = true;
   pdfButton.disabled = true;
   setStatus(message);
+}
+
+function preparePreview({ scroll = false } = {}) {
+  const text = sourceText.value.trim();
+  if (!text) {
+    setStatus("請先選擇文字檔或貼上內容。", "error");
+    return false;
+  }
+  reviewRows = buildReviewRows(parseText(text));
+  reviewedSource = text;
+  renderPreview();
+  previewPanel.hidden = false;
+  if (scroll) previewPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+  setStatus("預覽已建立。若沒有黃色異常，可直接下載報告。", "success");
+  return true;
 }
 
 const border = { style: BorderStyle.SINGLE, size: 4, color: "7F8C99" };
@@ -675,29 +693,25 @@ fileInput.addEventListener("change", async () => {
   if (!file) return;
   fileName.textContent = file.name;
   sourceText.value = await file.text();
-  invalidatePreview(`已載入 ${file.name}，請按「整理並預覽」。`);
+  invalidatePreview(`已載入 ${file.name}，正在自動整理...`);
+  preparePreview();
 });
 
 document.querySelector("#sampleButton").addEventListener("click", () => {
   sourceText.value = HOSPITAL_SAMPLE;
   fileName.textContent = "示範資料";
-  invalidatePreview("已載入示範資料，請按「整理並預覽」。");
+  invalidatePreview("已載入示範資料，正在自動整理...");
+  preparePreview();
 });
 
-sourceText.addEventListener("input", () => invalidatePreview());
+sourceText.addEventListener("input", () => {
+  clearTimeout(previewTimer);
+  invalidatePreview("內容已變更，正在自動整理...");
+  previewTimer = setTimeout(() => preparePreview(), 350);
+});
 
 previewButton.addEventListener("click", () => {
-  const text = sourceText.value.trim();
-  if (!text) {
-    setStatus("請先選擇文字檔或貼上內容。", "error");
-    return;
-  }
-  reviewRows = buildReviewRows(parseText(text));
-  reviewedSource = text;
-  renderPreview();
-  previewPanel.hidden = false;
-  previewPanel.scrollIntoView({ behavior: "smooth", block: "start" });
-  setStatus("預覽已建立。請確認黃色項目及各欄內容。", "success");
+  preparePreview({ scroll: true });
 });
 
 previewBody.addEventListener("input", (event) => {

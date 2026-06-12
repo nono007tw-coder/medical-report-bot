@@ -10,6 +10,43 @@ from report_writer import write_report
 
 
 class ParserTests(unittest.TestCase):
+    def test_irregular_cbc_differential_format(self):
+        text = """檢體　　：
+(Specimen type)\tBlood
+醫囑名稱：
+(Medical order)\tDC,WBC,Hb,Plt,
+項目\tH/L\t結果\t前次結果\t 單位\t  參考值
+WBC\t   \t6600\t(  )\t/uL\t4180 ~ 9380
+RBC\t   \t\t(  )\t\t
+Hb\tL\t8.7\t(  )\tg/dL\t13.3 ~ 17.4
+Plt\t   \t171000\t(  )\t/uL\t145000 ~ 383000
+ANC\t   \t4415\t(  )\t/uL\t1890 ~ 6760
+DC :%\t\t\t\t\t
+Band\t   \t0.0\t(  )\t%\t0 ~ 5
+Neu.\t   \t66.9\t(  )\t%\t45.0 ~ 81.2
+Lym.\t   \t14.8\t(  )\t%\t13.0 ~ 45.5
+Mono.\tH\t10.5\t(  )\t%\t3.7 ~ 8.8
+Eos.\tH\t7.6\t(  )\t%\t0.2 ~ 6.6
+Baso.\t   \t0.2\t(  )\t%\t0.1 ~ 1.6
+"""
+        items = parse_text(text)
+        grouped = classify_items(items)
+        rows = grouped["抽血檢查"]["血液常規檢查"]
+
+        self.assertNotIn("DC", [item.raw_name for item in items])
+        self.assertEqual(
+            [row["key"] for row in rows],
+            [
+                "WBC", "Hb", "Platelet", "ANC", "Band",
+                "Neutrophil", "Lymphocyte", "Monocyte",
+                "Eosinophil", "Basophil",
+            ],
+        )
+        self.assertEqual(rows[1]["result"], "8.7")
+        self.assertEqual(rows[1]["flag"], "L")
+        self.assertEqual(rows[7]["flag"], "H")
+        self.assertEqual(rows[8]["reference"], "0.2 ~ 6.6")
+
     def test_hospital_tabular_format(self):
         text = """檢體　　：
 (Specimen type)\tBlood

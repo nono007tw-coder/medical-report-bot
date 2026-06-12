@@ -88,6 +88,114 @@
     "category": "血液常規檢查",
     "order": 108
   },
+  "RDW-CV": {
+    "aliases": [
+      "RDW-CV",
+      "RDW CV",
+      "RDW"
+    ],
+    "zh": "紅血球分布寬度",
+    "en": "Red Cell Distribution Width, RDW-CV",
+    "section": "抽血檢查",
+    "category": "血液常規檢查",
+    "order": 109
+  },
+  "MPV": {
+    "aliases": [
+      "MPV"
+    ],
+    "zh": "平均血小板容積",
+    "en": "Mean Platelet Volume, MPV",
+    "section": "抽血檢查",
+    "category": "血液常規檢查",
+    "order": 110
+  },
+  "ANC": {
+    "aliases": [
+      "ANC"
+    ],
+    "zh": "嗜中性球絕對值",
+    "en": "Absolute Neutrophil Count, ANC",
+    "section": "抽血檢查",
+    "category": "血液常規檢查",
+    "order": 111
+  },
+  "Band": {
+    "aliases": [
+      "Band",
+      "Band."
+    ],
+    "zh": "帶狀嗜中性球",
+    "en": "Band Neutrophil, Band",
+    "section": "抽血檢查",
+    "category": "血液常規檢查",
+    "order": 112
+  },
+  "Neutrophil": {
+    "aliases": [
+      "Neu",
+      "Neu.",
+      "Neutrophil",
+      "Neutrophils"
+    ],
+    "zh": "嗜中性球",
+    "en": "Neutrophil, Neu.",
+    "section": "抽血檢查",
+    "category": "血液常規檢查",
+    "order": 113
+  },
+  "Lymphocyte": {
+    "aliases": [
+      "Lym",
+      "Lym.",
+      "Lymphocyte",
+      "Lymphocytes"
+    ],
+    "zh": "淋巴球",
+    "en": "Lymphocyte, Lym.",
+    "section": "抽血檢查",
+    "category": "血液常規檢查",
+    "order": 114
+  },
+  "Monocyte": {
+    "aliases": [
+      "Mono",
+      "Mono.",
+      "Monocyte",
+      "Monocytes"
+    ],
+    "zh": "單核球",
+    "en": "Monocyte, Mono.",
+    "section": "抽血檢查",
+    "category": "血液常規檢查",
+    "order": 115
+  },
+  "Eosinophil": {
+    "aliases": [
+      "Eos",
+      "Eos.",
+      "Eosinophil",
+      "Eosinophils"
+    ],
+    "zh": "嗜酸性球",
+    "en": "Eosinophil, Eos.",
+    "section": "抽血檢查",
+    "category": "血液常規檢查",
+    "order": 116
+  },
+  "Basophil": {
+    "aliases": [
+      "Baso",
+      "Baso.",
+      "Basophil",
+      "Basophils"
+    ],
+    "zh": "嗜鹼性球",
+    "en": "Basophil, Baso.",
+    "section": "抽血檢查",
+    "category": "血液常規檢查",
+    "order": 117
+  },
   "AST": {
     "aliases": [
       "AST",
