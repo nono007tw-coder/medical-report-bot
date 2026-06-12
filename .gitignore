@@ -8,3 +8,4 @@ qa-tools/
 web/.npm-cache/
 web/node_modules/
 web/dist/
+web/.chrome-preview/
