@@ -4,57 +4,163 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="在瀏覽器內整理檢查資料並產生 Word，不上傳檢查內容。">
+    <meta name="theme-color" content="#071b2d">
     <title>檢查報告機器人</title>
   </head>
   <body>
-    <main class="page">
-      <header class="hero">
-        <p class="eyebrow">MEDICAL REPORT BOT</p>
-        <h1>檢查報告機器人</h1>
-        <p class="intro">將醫院檢查文字整理成 Word。只整理資料，不提供診斷、判讀或醫療建議。</p>
-        <div class="privacy">
-          <strong>隱私優先：</strong>文字只在你的瀏覽器中處理，不會上傳到伺服器。
+    <div class="site-shell">
+      <nav class="nav">
+        <a class="brand" href="#" aria-label="檢查報告機器人首頁">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M7 3.5h7l4 4V20a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1Z"/><path d="M14 3.5V8h4M9 12h6M9 15h6M9 18h4"/></svg>
+          </span>
+          <span>
+            <strong>MEDORA</strong>
+            <small>Report Intelligence</small>
+          </span>
+        </a>
+        <div class="nav-badge">
+          <span class="status-dot"></span>
+          純瀏覽器運算
         </div>
-      </header>
+      </nav>
 
-      <section class="panel">
-        <div class="step">
-          <span>1</span>
-          <div>
-            <h2>加入檢查資料</h2>
-            <p>可以選擇文字檔，也可以直接貼上內容。</p>
+      <main>
+        <section class="hero">
+          <div class="hero-copy">
+            <p class="eyebrow"><span></span> PRIVATE MEDICAL WORKSPACE</p>
+            <h1>把複雜的檢查資料，<br><em>整理成清楚的報告。</em></h1>
+            <p class="intro">貼上醫院檢查文字，幾秒內完成分類、中英文對照與 Word 排版。資料只在你的裝置中處理。</p>
+            <div class="hero-trust">
+              <div>
+                <strong>90+</strong>
+                <span>常見檢驗對照</span>
+              </div>
+              <div>
+                <strong>100%</strong>
+                <span>本機資料處理</span>
+              </div>
+              <div>
+                <strong>DOCX</strong>
+                <span>一鍵產生報告</span>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <label class="file-picker">
-          <input id="fileInput" type="file" accept=".txt,text/plain">
-          <span>選擇文字檔</span>
-          <small id="fileName">尚未選擇檔案</small>
-        </label>
+          <aside class="privacy-card">
+            <div class="shield-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M12 3 5.5 5.8v5.4c0 4.5 2.7 7.8 6.5 9.8 3.8-2 6.5-5.3 6.5-9.8V5.8L12 3Z"/><path d="m9.2 12 1.8 1.8 3.8-4"/></svg>
+            </div>
+            <p class="privacy-label">Privacy by design</p>
+            <h2>檢查資料不離開你的瀏覽器</h2>
+            <p>沒有上傳、沒有帳號、沒有伺服器留存。關閉頁面後，貼上的內容不會被網站保存。</p>
+            <div class="privacy-line">
+              <span></span>
+              Client-side processing
+            </div>
+          </aside>
+        </section>
 
-        <label for="sourceText" class="textarea-label">或直接貼上檢查文字</label>
-        <textarea id="sourceText" placeholder="例如：
-SPECIMEN: BLOOD
+        <section class="workspace">
+          <div class="workspace-head">
+            <div>
+              <p class="section-kicker">CREATE REPORT</p>
+              <h2>建立檢查報告</h2>
+            </div>
+            <div class="steps" aria-label="操作步驟">
+              <span class="active"><b>01</b>加入資料</span>
+              <i></i>
+              <span><b>02</b>自動整理</span>
+              <i></i>
+              <span><b>03</b>下載 Word</span>
+            </div>
+          </div>
+
+          <div class="input-grid">
+            <div class="upload-column">
+              <p class="field-label">從文字檔匯入</p>
+              <label class="file-picker">
+                <input id="fileInput" type="file" accept=".txt,text/plain">
+                <span class="upload-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-5"/></svg>
+                </span>
+                <strong>選擇文字檔</strong>
+                <small>支援 .txt 純文字格式</small>
+                <span id="fileName" class="file-name">尚未選擇檔案</span>
+              </label>
+              <button id="sampleButton" class="sample-button" type="button">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8v4H8zM6 5H5a1 1 0 0 0-1 1v14h16V6a1 1 0 0 0-1-1h-1M8 12h8M8 16h5"/></svg>
+                載入示範資料
+              </button>
+            </div>
+
+            <div class="divider"><span>或</span></div>
+
+            <div class="paste-column">
+              <label for="sourceText" class="field-label">直接貼上檢查文字</label>
+              <div class="editor">
+                <div class="editor-bar">
+                  <span><i></i><i></i><i></i></span>
+                  <small>RAW MEDICAL DATA</small>
+                </div>
+                <textarea id="sourceText" spellcheck="false" placeholder="SPECIMEN: BLOOD
 Hb | 10.2 | g/dL | 12.0-16.0 | L"></textarea>
+              </div>
+            </div>
+          </div>
 
-        <div class="actions">
-          <button id="sampleButton" class="secondary" type="button">載入示範資料</button>
-          <button id="generateButton" class="primary" type="button">產生 Word 報告</button>
+          <div class="action-bar">
+            <div class="status-wrap">
+              <span class="status-icon" aria-hidden="true">i</span>
+              <p id="status" class="status" role="status" aria-live="polite">請先選擇文字檔或貼上內容。</p>
+            </div>
+            <button id="generateButton" class="primary" type="button">
+              <span>產生 Word 報告</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5"/></svg>
+            </button>
+          </div>
+        </section>
+
+        <section class="assurance">
+          <div class="assurance-title">
+            <p class="section-kicker">DESIGNED FOR CLARITY</p>
+            <h2>整理，而不越界</h2>
+          </div>
+          <div class="assurance-grid">
+            <article>
+              <span>01</span>
+              <h3>忠於原始資料</h3>
+              <p>影像報告完整保留，不摘要、不改寫。</p>
+            </article>
+            <article>
+              <span>02</span>
+              <h3>不做醫療判讀</h3>
+              <p>不新增診斷、建議或異常項目總表。</p>
+            </article>
+            <article>
+              <span>03</span>
+              <h3>未知項目不遺失</h3>
+              <p>無法辨識的項目仍會保留在報告中。</p>
+            </article>
+            <article>
+              <span>04</span>
+              <h3>適合列印閱讀</h3>
+              <p>A4 表格、中英文對照與清楚分類。</p>
+            </article>
+          </div>
+        </section>
+      </main>
+
+      <footer>
+        <div class="brand footer-brand">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M7 3.5h7l4 4V20a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1Z"/><path d="M14 3.5V8h4M9 12h6M9 15h6M9 18h4"/></svg>
+          </span>
+          <span><strong>MEDORA</strong><small>Report Intelligence</small></span>
         </div>
-
-        <p id="status" class="status" role="status" aria-live="polite">請先選擇文字檔或貼上內容。</p>
-      </section>
-
-      <section class="notes">
-        <h2>使用前請注意</h2>
-        <ul>
-          <li>請盡量移除姓名、病歷號、身分證字號等個人資料。</li>
-          <li>只有原始資料明確標示 H 或 L 時，結果才會加粗。</li>
-          <li>未知項目會保留，不會因為沒有對照名稱而消失。</li>
-          <li>影像報告原文會完整保留，不會摘要或改寫。</li>
-        </ul>
-      </section>
-    </main>
+        <p>本工具只整理檢查資料，不提供診斷、判讀或醫療建議。</p>
+      </footer>
+    </div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
