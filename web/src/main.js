@@ -28,7 +28,7 @@ const CATEGORY_ORDER = {
     "骨礦物質與副甲狀腺檢查", "發炎與感染指標", "感染血清學檢查",
     "心臟相關檢查", "肌肉酵素檢查", "凝血功能檢查",
     "自體免疫與風濕免疫檢查", "免疫與特殊蛋白檢查",
-    "內分泌與荷爾蒙檢查", "腫瘤指標", "胰臟功能檢查", "其他生化項目",
+    "內分泌與荷爾蒙檢查", "腫瘤指標", "胰臟功能檢查", "一般生化檢查",
   ],
   驗尿檢查: [
     "尿液一般檢查", "尿蛋白與白蛋白", "尿沉渣", "尿液生化檢查",
@@ -46,7 +46,6 @@ const REPORT_CATEGORY_ORDER = {
   "1. 血液檢查": ["血液常規檢查", "凝血功能檢查", "其他血液檢查"],
   "2. 生化檢查": [
     ...CATEGORY_ORDER.抽血檢查.filter((category) => !HEMATOLOGY_CATEGORIES.has(category)),
-    "其他生化檢查",
   ],
   "3. 尿液檢查": CATEGORY_ORDER.驗尿檢查,
   "4. 影像檢查": CATEGORY_ORDER.影像檢查,
@@ -74,7 +73,7 @@ const PATIENT_CATEGORY_LABELS = {
   內分泌與荷爾蒙檢查: "內分泌與荷爾蒙",
   腫瘤指標: "腫瘤指標",
   胰臟功能檢查: "胰臟功能",
-  其他生化檢查: "其他生化項目",
+  一般生化檢查: "一般生化",
   尿液一般檢查: "尿液一般檢查",
   尿蛋白與白蛋白: "尿蛋白與白蛋白",
   尿沉渣: "尿液顯微鏡檢查",
@@ -336,8 +335,32 @@ function unknownLocation(source) {
     return ["影像檢查", "其他影像檢查"];
   }
   if (combined.includes("URINE") || combined.includes("尿")) return ["驗尿檢查", "其他尿液檢查"];
-  if (/(BLOOD|SERUM|PLASMA|血)/.test(combined)) return ["抽血檢查", "其他生化項目"];
+  if (/(BLOOD|SERUM|PLASMA|血)/.test(combined)) {
+    return ["抽血檢查", inferUnknownBloodCategory(source.rawName)];
+  }
   return ["其他檢查項目", "其他檢查項目"];
+}
+
+function inferUnknownBloodCategory(rawName) {
+  const name = normalize(rawName);
+  const rules = [
+    [/^(wbc|rbc|hb|hgb|hct|mcv|mch|mchc|rdw|rdwcv|mpv|plt|platelet|anc|band|neu|neut|lym|lymph|mono|eos|baso|retic)/, "血液常規檢查"],
+    [/^(pt|inr|aptt|fibrinogen|fib|ddimer)/, "凝血功能檢查"],
+    [/^(ast|got|alt|gpt|alp|ggt|bil|tbil|dbil|ibil|alb|albumin|tp|tpro|ldh)/, "肝膽功能檢查"],
+    [/^(bun|creat|crea|cr|egfr|gfr|ua|uricacid|cystatin)/, "腎功能檢查"],
+    [/^(na|cl|ca|mg|hco3|co2|ag|aniongap)/, "電解質與酸鹼檢查"],
+    [/^(k|p|ip)$/, "電解質與酸鹼檢查"],
+    [/^(glu|glucose|sugar|hba1c|a1c|fructosamine)/, "血糖與糖尿病相關檢查"],
+    [/^(chol|tchol|tg|hdl|ldl)/, "血脂檢查"],
+    [/^(iron|fe|tibc|ferritin|tsat|transferrin|b12|folate)/, "鐵質與貧血相關檢查"],
+    [/^(tsh|ft4|freet4|ft3|freet3|thyroglobulin)/, "甲狀腺功能檢查"],
+    [/^(crp|esr|pct|il6)/, "發炎與感染指標"],
+    [/^(troponin|tni|ckmb|bnp|ntprobnp)/, "心臟相關檢查"],
+    [/^(ck|cpk|myoglobin)/, "肌肉酵素檢查"],
+    [/^(afp|cea|ca125|ca153|ca199|psa)/, "腫瘤指標"],
+    [/^(amylase|lipase)/, "胰臟功能檢查"],
+  ];
+  return rules.find(([pattern]) => pattern.test(name))?.[1] || "一般生化檢查";
 }
 
 function inferReportGroup(section, category, source) {
@@ -358,7 +381,7 @@ function categoryForGroup(row) {
   const allowed = REPORT_CATEGORY_ORDER[row.reportGroup];
   if (allowed.includes(row.category)) return row.category;
   if (row.reportGroup === "1. 血液檢查") return "其他血液檢查";
-  if (row.reportGroup === "2. 生化檢查") return "其他生化檢查";
+  if (row.reportGroup === "2. 生化檢查") return "一般生化檢查";
   if (row.reportGroup === "3. 尿液檢查") return "其他尿液檢查";
   return "其他影像檢查";
 }

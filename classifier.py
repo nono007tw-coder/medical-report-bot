@@ -16,8 +16,32 @@ def _unknown_location(item):
     if "URINE" in combined or "尿" in combined:
         return "驗尿檢查", "其他尿液檢查"
     if any(token in combined for token in ("BLOOD", "SERUM", "PLASMA", "血")):
-        return "抽血檢查", "其他生化項目"
+        return "抽血檢查", _unknown_blood_category(item.raw_name)
     return "其他檢查項目", "其他檢查項目"
+
+
+def _unknown_blood_category(raw_name):
+    name = normalize_name(raw_name)
+    rules = (
+        (("wbc", "rbc", "hb", "hgb", "hct", "mcv", "mch", "mchc", "rdw", "mpv", "plt", "anc", "band", "neu", "lym", "mono", "eos", "baso", "retic"), "血液常規檢查"),
+        (("pt", "inr", "aptt", "fibrinogen", "fib", "ddimer"), "凝血功能檢查"),
+        (("ast", "got", "alt", "gpt", "alp", "ggt", "bil", "tbil", "dbil", "ibil", "alb", "tp", "ldh"), "肝膽功能檢查"),
+        (("bun", "creat", "crea", "egfr", "gfr", "uricacid", "cystatin"), "腎功能檢查"),
+        (("na", "cl", "ca", "mg", "hco3", "co2", "aniongap"), "電解質與酸鹼檢查"),
+        (("glu", "glucose", "sugar", "hba1c", "a1c", "fructosamine"), "血糖與糖尿病相關檢查"),
+        (("chol", "tchol", "tg", "hdl", "ldl"), "血脂檢查"),
+        (("iron", "tibc", "ferritin", "tsat", "transferrin", "b12", "folate"), "鐵質與貧血相關檢查"),
+        (("tsh", "ft4", "freet4", "ft3", "freet3"), "甲狀腺功能檢查"),
+        (("crp", "esr", "pct", "il6"), "發炎與感染指標"),
+        (("troponin", "tni", "ckmb", "bnp", "ntprobnp"), "心臟相關檢查"),
+        (("ck", "cpk", "myoglobin"), "肌肉酵素檢查"),
+        (("afp", "cea", "ca125", "ca153", "ca199", "psa"), "腫瘤指標"),
+        (("amylase", "lipase"), "胰臟功能檢查"),
+    )
+    for prefixes, category in rules:
+        if name.startswith(prefixes):
+            return category
+    return "一般生化檢查"
 
 
 def classify_items(items):

@@ -246,6 +246,10 @@
   "Total Bilirubin": {
     "aliases": [
       "T-Bil",
+      "T.BIL",
+      "T.BILI",
+      "TBIL",
+      "Bil-T",
       "Total Bilirubin"
     ],
     "zh": "總膽紅素",
@@ -253,6 +257,34 @@
     "section": "抽血檢查",
     "category": "肝膽功能檢查",
     "order": 205
+  },
+  "Direct Bilirubin": {
+    "aliases": [
+      "D-Bil",
+      "D.BIL",
+      "D.BILI",
+      "DBIL",
+      "Bil-D",
+      "Direct Bilirubin"
+    ],
+    "zh": "直接膽紅素",
+    "en": "Direct Bilirubin, D-Bil",
+    "section": "抽血檢查",
+    "category": "肝膽功能檢查",
+    "order": 206
+  },
+  "Indirect Bilirubin": {
+    "aliases": [
+      "I-Bil",
+      "I.BIL",
+      "IBIL",
+      "Indirect Bilirubin"
+    ],
+    "zh": "間接膽紅素",
+    "en": "Indirect Bilirubin, I-Bil",
+    "section": "抽血檢查",
+    "category": "肝膽功能檢查",
+    "order": 207
   },
   "Albumin": {
     "aliases": [
@@ -263,18 +295,19 @@
     "en": "Albumin, Alb",
     "section": "抽血檢查",
     "category": "肝膽功能檢查",
-    "order": 206
+    "order": 208
   },
   "Total Protein": {
     "aliases": [
       "TP",
+      "T.PRO",
       "Total Protein"
     ],
     "zh": "總蛋白",
     "en": "Total Protein, TP",
     "section": "抽血檢查",
     "category": "肝膽功能檢查",
-    "order": 207
+    "order": 209
   },
   "LDH": {
     "aliases": [
@@ -285,7 +318,7 @@
     "en": "Lactate Dehydrogenase, LDH",
     "section": "抽血檢查",
     "category": "肝膽功能檢查",
-    "order": 208
+    "order": 210
   },
   "BUN": {
     "aliases": [
@@ -316,7 +349,12 @@
   "eGFR": {
     "aliases": [
       "eGFR",
-      "Estimated GFR"
+      "eGFR(M)",
+      "eGFR(F)",
+      "eGFR-M",
+      "eGFR-F",
+      "Estimated GFR",
+      "GFR"
     ],
     "zh": "估算腎絲球過濾率",
     "en": "Estimated Glomerular Filtration Rate, eGFR",
@@ -427,6 +465,17 @@
     "category": "電解質與酸鹼檢查",
     "order": 507
   },
+  "Anion Gap": {
+    "aliases": [
+      "AG",
+      "Anion Gap"
+    ],
+    "zh": "陰離子間隙",
+    "en": "Anion Gap, AG",
+    "section": "抽血檢查",
+    "category": "電解質與酸鹼檢查",
+    "order": 508
+  },
   "Glucose": {
     "aliases": [
       "Glucose",
@@ -451,6 +500,16 @@
     "section": "抽血檢查",
     "category": "血糖與糖尿病相關檢查",
     "order": 602
+  },
+  "Fructosamine": {
+    "aliases": [
+      "Fructosamine"
+    ],
+    "zh": "果糖胺",
+    "en": "Fructosamine",
+    "section": "抽血檢查",
+    "category": "血糖與糖尿病相關檢查",
+    "order": 603
   },
   "Total Cholesterol": {
     "aliases": [
@@ -541,6 +600,38 @@
     "category": "鐵質與貧血相關檢查",
     "order": 804
   },
+  "Transferrin": {
+    "aliases": [
+      "Transferrin"
+    ],
+    "zh": "轉鐵蛋白",
+    "en": "Transferrin",
+    "section": "抽血檢查",
+    "category": "鐵質與貧血相關檢查",
+    "order": 805
+  },
+  "Vitamin B12": {
+    "aliases": [
+      "Vitamin B12",
+      "B12"
+    ],
+    "zh": "維生素 B12",
+    "en": "Vitamin B12",
+    "section": "抽血檢查",
+    "category": "維生素與營養檢查",
+    "order": 902
+  },
+  "Folate": {
+    "aliases": [
+      "Folate",
+      "Folic Acid"
+    ],
+    "zh": "葉酸",
+    "en": "Folate",
+    "section": "抽血檢查",
+    "category": "維生素與營養檢查",
+    "order": 903
+  },
   "Vitamin D": {
     "aliases": [
       "Vitamin D",
@@ -574,6 +665,18 @@
     "section": "抽血檢查",
     "category": "甲狀腺功能檢查",
     "order": 1002
+  },
+  "Free T3": {
+    "aliases": [
+      "FREE T3",
+      "Free T3",
+      "FT3"
+    ],
+    "zh": "游離三碘甲狀腺素",
+    "en": "Free Triiodothyronine, Free T3",
+    "section": "抽血檢查",
+    "category": "甲狀腺功能檢查",
+    "order": 1004
   },
   "Intact-PTH": {
     "aliases": [
@@ -618,6 +721,17 @@
     "section": "抽血檢查",
     "category": "發炎與感染指標",
     "order": 1203
+  },
+  "IL-6": {
+    "aliases": [
+      "IL-6",
+      "Interleukin-6"
+    ],
+    "zh": "介白素 6",
+    "en": "Interleukin-6, IL-6",
+    "section": "抽血檢查",
+    "category": "發炎與感染指標",
+    "order": 1204
   },
   "Troponin": {
     "aliases": [
@@ -727,6 +841,17 @@
     "section": "抽血檢查",
     "category": "凝血功能檢查",
     "order": 1604
+  },
+  "Fibrinogen": {
+    "aliases": [
+      "Fibrinogen",
+      "FIB"
+    ],
+    "zh": "纖維蛋白原",
+    "en": "Fibrinogen",
+    "section": "抽血檢查",
+    "category": "凝血功能檢查",
+    "order": 1605
   },
   "ANA": {
     "aliases": [
@@ -864,6 +989,28 @@
     "category": "腫瘤指標",
     "order": 2004
   },
+  "CA-125": {
+    "aliases": [
+      "CA-125",
+      "CA125"
+    ],
+    "zh": "癌抗原 125",
+    "en": "Cancer Antigen 125, CA-125",
+    "section": "抽血檢查",
+    "category": "腫瘤指標",
+    "order": 2005
+  },
+  "CA15-3": {
+    "aliases": [
+      "CA15-3",
+      "CA 15-3"
+    ],
+    "zh": "癌抗原 15-3",
+    "en": "Cancer Antigen 15-3, CA15-3",
+    "section": "抽血檢查",
+    "category": "腫瘤指標",
+    "order": 2006
+  },
   "Thyroglobulin": {
     "aliases": [
       "Thyroglobulin",
@@ -989,6 +1136,65 @@
     "section": "驗尿檢查",
     "category": "尿液一般檢查",
     "order": 2203
+  },
+  "Urine Protein Dipstick": {
+    "aliases": [
+      "Protein",
+      "PRO",
+      "PRO(U)",
+      "Protein Dipstick"
+    ],
+    "zh": "尿蛋白定性",
+    "en": "Urine Protein, Dipstick",
+    "section": "驗尿檢查",
+    "category": "尿液一般檢查",
+    "order": 2204
+  },
+  "Urine Ketone": {
+    "aliases": [
+      "Ketone",
+      "Ketone(U)",
+      "KET"
+    ],
+    "zh": "尿酮體",
+    "en": "Urine Ketone",
+    "section": "驗尿檢查",
+    "category": "尿液一般檢查",
+    "order": 2205
+  },
+  "Urine Occult Blood": {
+    "aliases": [
+      "OB",
+      "Occult Blood",
+      "Blood(U)"
+    ],
+    "zh": "尿潛血",
+    "en": "Urine Occult Blood",
+    "section": "驗尿檢查",
+    "category": "尿液一般檢查",
+    "order": 2206
+  },
+  "Urine Nitrite": {
+    "aliases": [
+      "Nitrite",
+      "NIT"
+    ],
+    "zh": "尿亞硝酸鹽",
+    "en": "Urine Nitrite",
+    "section": "驗尿檢查",
+    "category": "尿液一般檢查",
+    "order": 2207
+  },
+  "Urine Leukocyte Esterase": {
+    "aliases": [
+      "Leukocyte Esterase",
+      "LEU"
+    ],
+    "zh": "尿白血球酯酶",
+    "en": "Urine Leukocyte Esterase",
+    "section": "驗尿檢查",
+    "category": "尿液一般檢查",
+    "order": 2208
   },
   "Urine RBC": {
     "aliases": [

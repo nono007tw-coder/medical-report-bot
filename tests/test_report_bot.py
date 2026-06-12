@@ -120,6 +120,19 @@ ALT\t   \t 15 \t(  )\t U/L \t M:<41; F:<33 U/L
         ))
         self.assertEqual(len(grouped["抽血檢查"]["腎功能檢查"]), 1)
 
+    def test_hospital_bilirubin_and_egfr_aliases_are_categorized(self):
+        grouped = classify_items(parse_text(
+            "SPECIMEN: BLOOD\n"
+            "T.BILI | 0.25 | mg/dL | <1.2 mg/dL\n"
+            "eGFR(M) | 9 | mL/min/1.73M2 | >60 mL/min/1.73M2"
+        ))
+
+        liver_rows = grouped["抽血檢查"]["肝膽功能檢查"]
+        kidney_rows = grouped["抽血檢查"]["腎功能檢查"]
+        self.assertEqual([row["key"] for row in liver_rows], ["Total Bilirubin"])
+        self.assertEqual([row["key"] for row in kidney_rows], ["eGFR"])
+        self.assertNotIn("一般生化檢查", grouped["抽血檢查"])
+
 
 class ReportTests(unittest.TestCase):
     def test_hospital_format_report_keeps_reference_columns(self):
