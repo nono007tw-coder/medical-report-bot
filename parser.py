@@ -218,6 +218,184 @@ def parse_text(text):
     return items
 
 
+def _parse_text_with_single_orders(text):
+    items = []
+    specimen = ""
+    lines = text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
+    index = 0
+    awaiting_specimen = False
+    pending_order = ""
+    single_result_mode = False
+    last_single_item = None
+
+    while index < len(lines):
+        raw_line = lines[index].rstrip()
+        line = raw_line.strip()
+        if not line:
+            index += 1
+            continue
+
+        if re.match(r"^(?:檢體|Specimen)\s*[:：]?\s*$", line, re.I):
+            awaiting_specimen = True
+            pending_order = ""
+            single_result_mode = False
+            last_single_item = None
+            index += 1
+            continue
+
+        bilingual_specimen = re.match(
+            r"^\(\s*Specimen\s*type\s*\)\s*(?:\t+|\s{2,})(.+)$",
+            line,
+            re.I,
+        )
+        if bilingual_specimen:
+            specimen = bilingual_specimen.group(1).strip()
+            awaiting_specimen = False
+            pending_order = ""
+            single_result_mode = False
+            last_single_item = None
+            index += 1
+            continue
+
+        if awaiting_specimen:
+            specimen = re.sub(
+                r"^\(\s*Specimen\s*type\s*\)\s*",
+                "",
+                line,
+                flags=re.I,
+            ).strip()
+            awaiting_specimen = False
+            index += 1
+            continue
+
+        medical_order = re.match(
+            r"^\(\s*Medical\s*order\s*\)\s*(?:\t+|\s{2,})(.+)$",
+            line,
+            re.I,
+        )
+        if medical_order:
+            pending_order = medical_order.group(1).strip().rstrip(",")
+            single_result_mode = False
+            last_single_item = None
+            index += 1
+            continue
+
+        if re.match(r"^H/L(?:\s|\t|$)", line, re.I):
+            single_result_mode = bool(pending_order)
+            index += 1
+            continue
+
+        if re.match(r"^參考值\s*[:：]?\s*$", line, re.I):
+            next_index = index + 1
+            while next_index < len(lines) and not lines[next_index].strip():
+                next_index += 1
+            if last_single_item is not None and next_index < len(lines):
+                last_single_item.reference = lines[next_index].strip()
+                last_single_item.raw_text = (
+                    f"{last_single_item.raw_text}\n參考值:\n{last_single_item.reference}"
+                )
+                index = next_index + 1
+            else:
+                index += 1
+            continue
+
+        if single_result_mode and pending_order:
+            parts = [part.strip() for part in raw_line.split("\t")]
+            if len(parts) >= 3:
+                flag = parts[0].upper() if parts[0].upper() in {"H", "L"} else ""
+                result = _clean_result(parts[1])
+                unit_index = (
+                    3
+                    if len(parts) > 3 and re.fullmatch(r"\(\s*.*?\s*\)", parts[2])
+                    else 2
+                )
+                unit = parts[unit_index] if len(parts) > unit_index else ""
+                reference = " ".join(part for part in parts[unit_index + 1:] if part)
+                if result:
+                    parsed = ParsedItem(
+                        raw_name=pending_order,
+                        result=result,
+                        unit=unit,
+                        reference=reference,
+                        flag=flag,
+                        specimen=specimen,
+                        raw_text=line,
+                    )
+                    items.append(parsed)
+                    last_single_item = parsed
+                    pending_order = ""
+                    single_result_mode = False
+                    index += 1
+                    continue
+
+        if (
+            re.match(r"^醫囑名稱\s*[:：]?\s*$", line, re.I)
+            or re.match(r"^\(\s*Medical\s*order\s*\)", line, re.I)
+            or re.match(r"^(?:項目|Item)\s*(?:\t|\|)", line, re.I)
+            or re.match(r"^DC\s*[:：]?\s*%?\s*(?:\t.*)?$", line, re.I)
+            or re.match(r"^儀器/方法\s*[:：]", line, re.I)
+        ):
+            index += 1
+            continue
+
+        specimen_match = re.match(
+            r"^\s*(?:SPECIMEN|檢體)\s*[:：]\s*(.+)$",
+            line,
+            re.I,
+        )
+        specimen_heading = SPECIMEN_HEADING_RE.match(line)
+        if specimen_match or specimen_heading:
+            specimen = (
+                specimen_match.group(1)
+                if specimen_match
+                else specimen_heading.group(1)
+            ).strip()
+            pending_order = ""
+            single_result_mode = False
+            last_single_item = None
+            index += 1
+            continue
+
+        if IMAGE_START_RE.search(line):
+            block = [line]
+            index += 1
+            while index < len(lines):
+                next_line = lines[index].rstrip()
+                if re.match(r"^\s*(?:SPECIMEN|檢體)\s*[:：]", next_line, re.I) or IMAGE_START_RE.search(next_line):
+                    break
+                if next_line.strip():
+                    block.append(next_line)
+                index += 1
+            name = block[0].split("|", 1)[0].split(":", 1)[0].strip()
+            items.append(ParsedItem(name, raw_text="\n".join(block), specimen=specimen, is_image=True))
+            continue
+
+        colon_positions = [
+            position for position in (line.find(":"), line.find("："))
+            if position >= 0
+        ]
+        first_colon = min(colon_positions) if colon_positions else -1
+        first_pipe = line.find("|")
+        if "\t" in line:
+            parsed = _parse_delimited(line, specimen)
+        elif first_colon >= 0 and (first_pipe < 0 or first_colon < first_pipe):
+            parsed = _parse_colon(line, specimen)
+        elif "|" in line:
+            parsed = _parse_delimited(line, specimen)
+        else:
+            parsed = _parse_whitespace(line, specimen)
+        if parsed:
+            items.append(parsed)
+        else:
+            items.append(ParsedItem(line, raw_text=line, specimen=specimen))
+        index += 1
+
+    return items
+
+
+parse_text = _parse_text_with_single_orders
+
+
 def read_and_parse(path):
     for encoding in ("utf-8-sig", "utf-8", "cp950"):
         try:

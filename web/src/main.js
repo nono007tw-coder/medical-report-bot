@@ -135,7 +135,7 @@ function splitFlag(value, flag = "") {
   return match ? [match[1].trim(), match[2].toUpperCase()] : [value, ""];
 }
 
-function parseText(text) {
+function parseTextLegacy(text) {
   const lines = text.replace(/\r\n?/g, "\n").split("\n");
   const items = [];
   let specimen = "";
@@ -214,6 +214,148 @@ function parseText(text) {
     });
     index += 1;
   }
+  return items;
+}
+
+function parseText(text) {
+  const lines = text.replace(/\r\n?/g, "\n").split("\n");
+  const items = [];
+  let specimen = "";
+  let awaitingSpecimen = false;
+  let pendingOrder = "";
+  let singleResultMode = false;
+  let lastSingleItem = null;
+
+  for (let index = 0; index < lines.length;) {
+    const rawLine = lines[index].trimEnd();
+    const line = rawLine.trim();
+    if (!line) {
+      index += 1;
+      continue;
+    }
+
+    if (/^(?:檢體|Specimen)\s*[:：]?\s*$/i.test(line)) {
+      awaitingSpecimen = true;
+      pendingOrder = "";
+      singleResultMode = false;
+      lastSingleItem = null;
+      index += 1;
+      continue;
+    }
+
+    const bilingualSpecimen = line.match(/^\(\s*Specimen\s*type\s*\)\s*(?:\t+|\s{2,})(.+)$/i);
+    if (bilingualSpecimen) {
+      specimen = bilingualSpecimen[1].trim();
+      awaitingSpecimen = false;
+      pendingOrder = "";
+      singleResultMode = false;
+      lastSingleItem = null;
+      index += 1;
+      continue;
+    }
+
+    if (awaitingSpecimen) {
+      specimen = line.replace(/^\(\s*Specimen\s*type\s*\)\s*/i, "").trim();
+      awaitingSpecimen = false;
+      index += 1;
+      continue;
+    }
+
+    const medicalOrder = line.match(/^\(\s*Medical\s*order\s*\)\s*(?:\t+|\s{2,})(.+)$/i);
+    if (medicalOrder) {
+      pendingOrder = medicalOrder[1].trim().replace(/,+$/, "");
+      singleResultMode = false;
+      lastSingleItem = null;
+      index += 1;
+      continue;
+    }
+
+    if (/^H\/L(?:\s|\t|$)/i.test(line)) {
+      singleResultMode = Boolean(pendingOrder);
+      index += 1;
+      continue;
+    }
+
+    if (/^參考值\s*[:：]?\s*$/i.test(line)) {
+      let nextIndex = index + 1;
+      while (nextIndex < lines.length && !lines[nextIndex].trim()) nextIndex += 1;
+      if (lastSingleItem && nextIndex < lines.length) {
+        lastSingleItem.reference = lines[nextIndex].trim();
+        lastSingleItem.rawText = `${lastSingleItem.rawText}\n參考值:\n${lastSingleItem.reference}`;
+        index = nextIndex + 1;
+      } else {
+        index += 1;
+      }
+      continue;
+    }
+
+    if (singleResultMode && pendingOrder) {
+      const parts = rawLine.split("\t").map((part) => part.trim());
+      if (parts.length >= 3) {
+        const flag = ["H", "L"].includes(parts[0].toUpperCase()) ? parts[0].toUpperCase() : "";
+        const result = cleanResult(parts[1]);
+        const unitIndex = parts.length > 3 && /^\(\s*.*?\s*\)$/.test(parts[2]) ? 3 : 2;
+        const unit = parts[unitIndex] || "";
+        const reference = parts.slice(unitIndex + 1).filter(Boolean).join(" ");
+        if (result) {
+          const parsed = item(pendingOrder, result, unit, reference, flag, specimen, line);
+          items.push(parsed);
+          lastSingleItem = parsed;
+          pendingOrder = "";
+          singleResultMode = false;
+          index += 1;
+          continue;
+        }
+      }
+    }
+
+    if (
+      /^醫囑名稱\s*[:：]?\s*$/i.test(line) ||
+      /^\(\s*Medical\s*order\s*\)/i.test(line) ||
+      /^(?:項目|Item)\s*(?:\t|\|)/i.test(line) ||
+      /^DC\s*[:：]?\s*%?\s*(?:\t.*)?$/i.test(line) ||
+      /^儀器\/方法\s*[:：]/i.test(line)
+    ) {
+      index += 1;
+      continue;
+    }
+
+    const specimenMatch = line.match(/^(?:SPECIMEN|檢體)\s*[:：]\s*(.+)$/i);
+    const specimenHeading = line.match(/^\[?\s*(BLOOD|SERUM|PLASMA|URINE(?:\(SPOT\))?)\s*\]?$/i);
+    if (specimenMatch || specimenHeading) {
+      specimen = (specimenMatch?.[1] || specimenHeading[1]).trim();
+      pendingOrder = "";
+      singleResultMode = false;
+      lastSingleItem = null;
+      index += 1;
+      continue;
+    }
+
+    if (isImageHeading(line)) {
+      const block = [line];
+      index += 1;
+      while (index < lines.length) {
+        const next = lines[index].trimEnd();
+        if (/^(?:SPECIMEN|檢體)\s*[:：]/i.test(next) || isImageHeading(next.trim())) break;
+        if (next.trim()) block.push(next);
+        index += 1;
+      }
+      items.push({
+        rawName: line.split(/[|:：]/, 1)[0].trim(),
+        result: "", unit: "", reference: "", flag: "", specimen,
+        rawText: block.join("\n"), isImage: true,
+      });
+      continue;
+    }
+
+    const parsed = parseResultLine(line, specimen);
+    items.push(parsed || {
+      rawName: line, result: "", unit: "", reference: "", flag: "",
+      specimen, rawText: line, isImage: false,
+    });
+    index += 1;
+  }
+
   return items;
 }
 
@@ -416,7 +558,7 @@ function buildReviewRows(items) {
 
     return {
       id: position,
-      included: hasContent,
+      included: hasContent && !isDuplicate,
       warning: warnings.length > 0,
       warningText: warnings.join("、"),
       key: canonical || source.rawName,

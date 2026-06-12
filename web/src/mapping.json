@@ -223,6 +223,8 @@
   "ALP": {
     "aliases": [
       "ALP",
+      "ALK-P",
+      "Alk-P",
       "Alkaline Phosphatase"
     ],
     "zh": "鹼性磷酸酶",
@@ -427,6 +429,19 @@
     "category": "電解質與酸鹼檢查",
     "order": 504
   },
+  "Ionized Calcium": {
+    "aliases": [
+      "Ca++, free",
+      "Free Calcium",
+      "Ionized Calcium",
+      "iCa"
+    ],
+    "zh": "游離鈣",
+    "en": "Ionized Calcium, iCa",
+    "section": "抽血檢查",
+    "category": "電解質與酸鹼檢查",
+    "order": 505
+  },
   "Phosphate": {
     "aliases": [
       "P",
@@ -493,6 +508,7 @@
     "aliases": [
       "HbA1c",
       "A1C",
+      "A1C (HbA1C)",
       "Glycated Hemoglobin"
     ],
     "zh": "糖化血色素",
@@ -515,6 +531,7 @@
     "aliases": [
       "T-CHOL",
       "CHOL",
+      "CHOL.",
       "Total Cholesterol"
     ],
     "zh": "總膽固醇",
@@ -550,6 +567,7 @@
     "aliases": [
       "LDL",
       "LDL-C",
+      "LDL-C(實測值)",
       "LDL Cholesterol"
     ],
     "zh": "低密度脂蛋白膽固醇",
@@ -557,6 +575,18 @@
     "section": "抽血檢查",
     "category": "血脂檢查",
     "order": 704
+  },
+  "Cholesterol/HDL Ratio": {
+    "aliases": [
+      "CHOL/HDLC",
+      "CHOL/HDL-C",
+      "TC/HDL"
+    ],
+    "zh": "總膽固醇／高密度脂蛋白比值",
+    "en": "Total Cholesterol/HDL Ratio",
+    "section": "抽血檢查",
+    "category": "血脂檢查",
+    "order": 705
   },
   "Iron": {
     "aliases": [
@@ -636,6 +666,7 @@
     "aliases": [
       "Vitamin D",
       "25-OH Vitamin D",
+      "25-OH Vitamin D(SP)",
       "25(OH)D"
     ],
     "zh": "維生素 D",
@@ -737,6 +768,7 @@
     "aliases": [
       "Troponin",
       "Troponin-I",
+      "TROP-I",
       "hs-TnI"
     ],
     "zh": "心肌肌鈣蛋白",
@@ -744,6 +776,18 @@
     "section": "抽血檢查",
     "category": "心臟相關檢查",
     "order": 1401
+  },
+  "High-Sensitivity Troponin T": {
+    "aliases": [
+      "Hs cTnT",
+      "hs-cTnT",
+      "High-Sensitivity Troponin T"
+    ],
+    "zh": "高敏感度心肌肌鈣蛋白 T",
+    "en": "High-Sensitivity Cardiac Troponin T, hs-cTnT",
+    "section": "抽血檢查",
+    "category": "心臟相關檢查",
+    "order": 1402
   },
   "CK-MB": {
     "aliases": [
@@ -1013,8 +1057,7 @@
   },
   "Thyroglobulin": {
     "aliases": [
-      "Thyroglobulin",
-      "Tg"
+      "Thyroglobulin"
     ],
     "zh": "甲狀腺球蛋白",
     "en": "Thyroglobulin, Tg",

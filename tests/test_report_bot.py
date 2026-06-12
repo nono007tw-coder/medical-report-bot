@@ -133,6 +133,170 @@ ALT\t   \t 15 \t(  )\t U/L \t M:<41; F:<33 U/L
         self.assertEqual([row["key"] for row in kidney_rows], ["eGFR"])
         self.assertNotIn("一般生化檢查", grouped["抽血檢查"])
 
+    def test_single_order_result_and_separate_reference(self):
+        text = """檢體　　：
+(Specimen type)\tBlood
+醫囑名稱：
+(Medical order)\tCa++, free
+H/L\t結果\t前次結果\t單位
+    \t1.20\t(  )\tmmol/L
+
+參考值:
+1.13 ~ 1.31 mmol/L
+檢體　　：
+(Specimen type)\tBlood
+醫囑名稱：
+(Medical order)\t25-OH Vitamin D(SP)
+H/L\t結果\t前次結果\t單位
+L\t26.0\t(  )\tng/mL
+
+參考值:
+Recommendation: >=30 ng/mL
+"""
+        grouped = classify_items(parse_text(text))
+        electrolyte = grouped["抽血檢查"]["電解質與酸鹼檢查"][0]
+        vitamin = grouped["抽血檢查"]["維生素與營養檢查"][0]
+
+        self.assertEqual(
+            (electrolyte["key"], electrolyte["result"], electrolyte["unit"], electrolyte["reference"]),
+            ("Ionized Calcium", "1.20", "mmol/L", "1.13 ~ 1.31 mmol/L"),
+        )
+        self.assertEqual(
+            (vitamin["key"], vitamin["result"], vitamin["flag"], vitamin["reference"]),
+            ("Vitamin D", "26.0", "L", "Recommendation: >=30 ng/mL"),
+        )
+
+    def test_single_a1c_and_duplicate_afp(self):
+        text = """SPECIMEN: BLOOD
+(Medical order)\tA1C (HbA1C)
+H/L\t結果\t前次結果\t單位\t參考值
+H\t6.1\t(  )\t%\tHealthy: 4.8~5.9%
+SPECIMEN: BLOOD
+(Medical order)\tAFP
+H/L\t結果\t前次結果\t單位
+\t3.70\t(  )\tng/mL
+參考值:
+<=7.0
+SPECIMEN: BLOOD
+(Medical order)\tAFP
+H/L\t結果\t前次結果\t單位
+\t3.70\t(  )\tng/mL
+參考值:
+<=7.0
+"""
+        grouped = classify_items(parse_text(text))
+        a1c_rows = grouped["抽血檢查"]["血糖與糖尿病相關檢查"]
+        afp_rows = grouped["抽血檢查"]["腫瘤指標"]
+
+        self.assertEqual((a1c_rows[0]["key"], a1c_rows[0]["result"], a1c_rows[0]["flag"]), ("HbA1c", "6.1", "H"))
+        self.assertEqual(len(afp_rows), 1)
+        self.assertEqual((afp_rows[0]["key"], afp_rows[0]["reference"]), ("AFP", "<=7.0"))
+
+    def test_complete_mixed_hospital_report_keeps_all_nonempty_results(self):
+        text = """檢體：
+(Specimen type)\tBlood
+(Medical order)\tCa++, free
+H/L\t結果\t前次結果\t單位
+\t1.20\t(  )\tmmol/L
+參考值:
+1.13 ~ 1.31 mmol/L
+檢體：
+(Specimen type)\tBlood
+(Medical order)\tCBC,DC,
+項目\tH/L\t結果\t前次結果\t單位\t參考值
+WBC\t\t6850\t(  )\t/uL\t4180 ~ 9380
+RBC\t\t4.75\t(  )\t10^6/uL\t3.80 ~ 5.10
+Hb\t\t14.2\t(  )\tg/dL\t10.9 ~ 15.6
+Hct\t\t42.1\t(  )\t%\t33.4 ~ 45.5
+MCV\t\t88.6\t(  )\tfL\t82.0 ~ 97.7
+MCH\t\t29.9\t(  )\tpg\t27.6 ~ 33.0
+MCHC\t\t33.7\t(  )\tg/dL\t32.0 ~ 35.2
+RDW-CV\t\t12.5\t(  )\t%\t11.8 ~ 14.6
+MPV\t\t9.4\t(  )\tfL\t9.0 ~ 12.6
+Plt\t\t180000\t(  )\t/uL\t145000 ~ 383000
+ANC\t\t5028\t(  )\t/uL\t1890 ~ 6760
+Band\t\t0.0\t(  )\t%\t0 ~ 5
+Neu.\t\t73.4\t(  )\t%\t45.0 ~ 81.2
+Lym.\t\t20.0\t(  )\t%\t13.0 ~ 45.5
+Mono.\t\t5.3\t(  )\t%\t3.7 ~ 8.8
+Eos.\t\t0.9\t(  )\t%\t0.2 ~ 6.6
+Baso.\t\t0.4\t(  )\t%\t0.1 ~ 1.6
+檢體：
+(Specimen type)\tBlood
+(Medical order)\tNA,K,Ca,Alb,P,Crea,BUN,ALP,Mg,ALT,Bil-T,
+項目\tH/L\t結果\t前次結果\t單位\t參考值
+BUN\t\t12\t(  )\tmg/dL\t6~20 mg/dL
+Na\t\t145\t(  )\tmmol/L\t136~145 mmol/L
+K\t\t3.6\t(  )\tmmol/L\t3.5~5.1 mmol/L
+Cl\t\t\t(  )\t\t
+Creat\t\t0.72\t(  )\tmg/dL\tM:0.7~1.2; F:0.5-0.9 mg/dL
+ALT\t\t10\t(  )\tU/L\tM:<41; F:<33 U/L
+ALK-P\t\t96\t(  )\tU/L\tM:40~129 F:35-104 U/L
+T.BILI\t\t0.35\t(  )\tmg/dL\t<1.2 mg/dL
+I.P.\t\t2.8\t(  )\tmg/dL\t2.5~4.5 mg/dL
+Ca\t\t10.0\t(  )\tmg/dL\t8.6~10.0 mg/dL
+ALB\t\t4.5\t(  )\tg/dL\t3.7 ~ 5.3 g/dL
+Mg\t\t2.30\t(  )\tmg/dL\t1.6~2.4 mg/dL
+eGFR(M)\t\t80\t(  )\t\t>60 mL/min/1.73M^2
+檢體：
+(Specimen type)\tBlood
+(Medical order)\t25-OH Vitamin D(SP)
+H/L\t結果\t前次結果\t單位
+L\t26.0\t(  )\tng/mL
+參考值:
+Recommendation: >=30 ng/mL
+檢體：
+(Specimen type)\tBlood
+(Medical order)\tIntact-PTH
+H/L\t結果\t前次結果\t單位
+\t67.1\t(  )\tpg/mL
+參考值:
+17.3~74.1
+檢體：
+(Specimen type)\tBlood
+(Medical order)\tA1C (HbA1C)
+H/L\t結果\t前次結果\t單位\t參考值
+H\t6.1\t(  )\t%\tHealthy: 4.8~5.9%
+SPECIMEN: BLOOD
+UA\t\t3.7\t(  )\tmg/dL\tM:3.4~7.0; F:2.4-5.7 mg/dL
+SPECIMEN: BLOOD
+CHOL.\t\t188\t(  )\tmg/dL\t<200
+TG\t\t83\t(  )\tmg/dL\t<150
+HDL-C\t\t52.0\t(  )\tmg/dL\tM:>40; F:>50
+LDL-C(實測值)\t\t114.0\t(  )\tmg/dL\t<130
+CHOL/HDLC\t\t3.6\t(  )\t\tMale 3.1~4.7, Female 2.8~4.6
+SPECIMEN: BLOOD
+(Medical order)\tAFP
+H/L\t結果\t前次結果\t單位
+\t3.70\t(  )\tng/mL
+參考值:
+<=7.0
+SPECIMEN: BLOOD
+(Medical order)\tAFP
+H/L\t結果\t前次結果\t單位
+\t3.70\t(  )\tng/mL
+參考值:
+<=7.0
+"""
+        grouped = classify_items(parse_text(text))
+        rows = [
+            row
+            for categories in grouped.values()
+            for category_rows in categories.values()
+            for row in category_rows
+        ]
+        keys = {row["key"] for row in rows}
+
+        self.assertEqual(len(rows), 40)
+        self.assertTrue({
+            "Ionized Calcium", "WBC", "Basophil", "BUN", "ALP",
+            "Total Bilirubin", "eGFR", "Vitamin D", "Intact-PTH",
+            "HbA1c", "Uric Acid", "Total Cholesterol", "LDL-C",
+            "Cholesterol/HDL Ratio", "AFP",
+        }.issubset(keys))
+        self.assertNotIn("Chloride", keys)
+        self.assertEqual(sum(row["key"] == "AFP" for row in rows), 1)
+
 
 class ReportTests(unittest.TestCase):
     def test_hospital_format_report_keeps_reference_columns(self):
