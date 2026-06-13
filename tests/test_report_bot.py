@@ -340,6 +340,11 @@ class ReportTests(unittest.TestCase):
             result_cell = doc.tables[0].rows[1].cells[2]
             self.assertTrue(any(run.bold for run in result_cell.paragraphs[0].runs))
             self.assertEqual(len(doc.tables[-1].columns), 4)
+            self.assertTrue(all(
+                row._tr.xpath("./w:trPr/w:cantSplit")
+                for table in doc.tables
+                for row in table.rows
+            ))
             image_text = doc.tables[-1].rows[1].cells[2].text
             self.assertIn("Finding: Test finding.", image_text)
             self.assertIn("Impression: Test impression.", image_text)

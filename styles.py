@@ -84,6 +84,13 @@ def set_repeat_table_header(row):
     tr_pr.append(header)
 
 
+def set_cant_split(row):
+    tr_pr = row._tr.get_or_add_trPr()
+    cant_split = OxmlElement("w:cantSplit")
+    cant_split.set(qn("w:val"), "true")
+    tr_pr.append(cant_split)
+
+
 def set_table_borders(table):
     tbl_pr = table._tbl.tblPr
     borders = tbl_pr.find(qn("w:tblBorders"))
@@ -106,6 +113,7 @@ def style_table(table, header_widths_cm, body_center_columns=(2, 3)):
     table.autofit = False
     set_table_borders(table)
     for row_index, row in enumerate(table.rows):
+        set_cant_split(row)
         for col_index, cell in enumerate(row.cells):
             cell.width = Cm(header_widths_cm[col_index])
             cell.vertical_alignment = 1

@@ -840,6 +840,7 @@ function textParagraph(text, { bold = false, center = false, size = 18 } = {}) {
   return new Paragraph({
     alignment: center ? AlignmentType.CENTER : AlignmentType.LEFT,
     spacing: { before: 0, after: 0 },
+    keepLines: true,
     children: [new TextRun({ text, bold, size, font: "Arial", eastAsia: "Microsoft JhengHei" })],
   });
 }
@@ -849,14 +850,18 @@ function cell(text, width, options = {}) {
     width: { size: width, type: WidthType.DXA },
     verticalAlign: VerticalAlign.CENTER,
     margins: { top: 90, bottom: 90, left: 100, right: 100 },
-    shading: options.header ? { type: ShadingType.CLEAR, fill: "D9EAF7" } : undefined,
+    shading: options.header
+      ? { type: ShadingType.CLEAR, fill: "D9EAF7" }
+      : options.fill
+        ? { type: ShadingType.CLEAR, fill: options.fill }
+        : undefined,
     borders,
     children: [textParagraph(text, options)],
   });
 }
 
 function labTable(rows) {
-  const widths = [1650, 2550, 1900, 3260];
+  const widths = [1800, 3000, 1800, 2760];
   return new Table({
     width: { size: 9360, type: WidthType.DXA },
     columnWidths: widths,
@@ -864,18 +869,27 @@ function labTable(rows) {
     rows: [
       new TableRow({
         tableHeader: true,
+        cantSplit: true,
         children: ["中文項目", "英文項目", "結果", "正常值"].map((value, index) =>
           cell(value, widths[index], { header: true, bold: true, center: index >= 2 })
         ),
       }),
-      ...rows.map((row) => new TableRow({
-        children: [
-          cell(row.zh, widths[0]),
-          cell(row.en, widths[1]),
-          cell([row.result, row.unit].filter(Boolean).join(" "), widths[2], { bold: ["H", "L"].includes(row.flag), center: true }),
-          cell(row.reference, widths[3], { center: true }),
-        ],
-      })),
+      ...rows.map((row, rowIndex) => {
+        const fill = rowIndex % 2 ? "F7FAFC" : undefined;
+        return new TableRow({
+          cantSplit: true,
+          children: [
+            cell(row.zh, widths[0], { bold: true, fill }),
+            cell(row.en, widths[1], { size: 16, fill }),
+            cell([row.result, row.unit].filter(Boolean).join(" "), widths[2], {
+              bold: ["H", "L"].includes(row.flag),
+              center: true,
+              fill,
+            }),
+            cell(row.reference, widths[3], { center: true, size: 16, fill }),
+          ],
+        });
+      }),
     ],
   });
 }
@@ -964,17 +978,17 @@ function makePdfReport(grouped) {
 
       const headers = ["中文項目", "英文項目", "結果", "正常值"];
       const table = document.createElement("table");
-      table.style.cssText = "width:100%;border-collapse:collapse;table-layout:fixed;font-size:9px;break-inside:auto;";
-      const headerWidths = ["22%", "34%", "20%", "24%"];
+      table.style.cssText = "width:100%;border-collapse:collapse;table-layout:fixed;font-size:8.8px;break-inside:auto;";
+      const headerWidths = ["20%", "32%", "19%", "29%"];
       table.innerHTML = `
         <thead style="display:table-header-group;"><tr>${headers.map((header, index) =>
           `<th style="width:${headerWidths[index]};padding:2.4mm 2mm;text-align:${index >= 2 ? "center" : "left"};background:#dcecf5;border:1px solid #8198a7;color:#173b55;font-weight:700;">${header}</th>`
         ).join("")}</tr></thead>
-        <tbody>${rows.map((row) => `<tr>
-            <td style="padding:2.4mm 2mm;border:1px solid #8198a7;">${escapeHtml(row.zh)}</td>
-            <td style="padding:2.4mm 2mm;border:1px solid #8198a7;">${escapeHtml(row.en)}</td>
-            <td style="padding:2.4mm 2mm;border:1px solid #8198a7;text-align:${row.isImage ? "left" : "center"};white-space:${row.isImage ? "pre-wrap" : "normal"};font-weight:${["H", "L"].includes(row.flag) ? "700" : "400"};">${escapeHtml(row.isImage ? row.rawText : [row.result, row.unit].filter(Boolean).join(" "))}</td>
-            <td style="padding:2.4mm 2mm;border:1px solid #8198a7;text-align:center;">${escapeHtml(row.reference)}</td>
+        <tbody>${rows.map((row, rowIndex) => `<tr data-report-row style="break-inside:avoid;page-break-inside:avoid;background:${rowIndex % 2 ? "#f7fafc" : "#ffffff"};">
+            <td style="padding:2.3mm 2mm;border:1px solid #8198a7;vertical-align:middle;white-space:nowrap;font-weight:700;">${escapeHtml(row.zh)}</td>
+            <td style="padding:2.3mm 2mm;border:1px solid #8198a7;vertical-align:middle;line-height:1.35;overflow-wrap:normal;word-break:keep-all;">${escapeHtml(row.en)}</td>
+            <td style="padding:2.3mm 2mm;border:1px solid #8198a7;vertical-align:middle;text-align:${row.isImage ? "left" : "center"};white-space:${row.isImage ? "pre-wrap" : "nowrap"};font-weight:${["H", "L"].includes(row.flag) ? "700" : "500"};">${escapeHtml(row.isImage ? row.rawText : [row.result, row.unit].filter(Boolean).join(" "))}</td>
+            <td style="padding:2.3mm 2mm;border:1px solid #8198a7;vertical-align:middle;text-align:center;line-height:1.35;">${escapeHtml(row.reference)}</td>
           </tr>`).join("")}</tbody>`;
       categoryBlock.appendChild(table);
       sectionBlock.appendChild(categoryBlock);
@@ -988,6 +1002,38 @@ function makePdfReport(grouped) {
   root.appendChild(footer);
 
   return root;
+}
+
+function getPdfRowRanges(report, canvas) {
+  const reportRect = report.getBoundingClientRect();
+  const scale = canvas.width / reportRect.width;
+  return [...report.querySelectorAll("[data-report-row]")]
+    .map((row) => {
+      const rect = row.getBoundingClientRect();
+      return {
+        top: Math.round((rect.top - reportRect.top) * scale),
+        bottom: Math.round((rect.bottom - reportRect.top) * scale),
+      };
+    })
+    .filter((range) => range.bottom > range.top);
+}
+
+function choosePdfSliceHeight(sourceY, pagePixelHeight, canvasHeight, rowRanges) {
+  const naturalEnd = Math.min(sourceY + pagePixelHeight, canvasHeight);
+  if (naturalEnd >= canvasHeight) return canvasHeight - sourceY;
+
+  const crossingRow = rowRanges.find(
+    (range) => range.top < naturalEnd && range.bottom > naturalEnd,
+  );
+  if (!crossingRow) return naturalEnd - sourceY;
+
+  const spaceBeforeRow = crossingRow.top - sourceY;
+  const rowHeight = crossingRow.bottom - crossingRow.top;
+  const enoughContentBeforeRow = spaceBeforeRow >= pagePixelHeight * 0.2;
+  const rowFitsOnPage = rowHeight < pagePixelHeight;
+  if (enoughContentBeforeRow && rowFitsOnPage) return spaceBeforeRow;
+
+  return naturalEnd - sourceY;
 }
 
 function getReportData() {
@@ -1125,11 +1171,17 @@ pdfButton.addEventListener("click", async () => {
       const pageWidthMm = 196;
       const pageHeightMm = 282;
       const pagePixelHeight = Math.floor(canvas.width * pageHeightMm / pageWidthMm);
+      const rowRanges = getPdfRowRanges(report, canvas);
       let sourceY = 0;
       let pageIndex = 0;
 
       while (sourceY < canvas.height) {
-        const sliceHeight = Math.min(pagePixelHeight, canvas.height - sourceY);
+        const sliceHeight = choosePdfSliceHeight(
+          sourceY,
+          pagePixelHeight,
+          canvas.height,
+          rowRanges,
+        );
         const pageCanvas = document.createElement("canvas");
         pageCanvas.width = canvas.width;
         pageCanvas.height = pagePixelHeight;
