@@ -23,6 +23,7 @@ def _unknown_location(item):
 def _unknown_blood_category(raw_name):
     name = normalize_name(raw_name)
     rules = (
+        (("hbs", "hbe", "antihb", "hbv", "hcv", "hiv", "rpr", "tppa", "vdrl", "cmv", "ebv", "covid", "sars", "influenza"), "感染血清學檢查"),
         (("wbc", "rbc", "hb", "hgb", "hct", "mcv", "mch", "mchc", "rdw", "mpv", "plt", "anc", "band", "neu", "lym", "mono", "eos", "baso", "retic"), "血液常規檢查"),
         (("pt", "inr", "aptt", "fibrinogen", "fib", "ddimer"), "凝血功能檢查"),
         (("ast", "got", "alt", "gpt", "alp", "ggt", "bil", "tbil", "dbil", "ibil", "alb", "tp", "ldh"), "肝膽功能檢查"),
@@ -33,6 +34,8 @@ def _unknown_blood_category(raw_name):
         (("iron", "tibc", "ferritin", "tsat", "transferrin", "b12", "folate"), "鐵質與貧血相關檢查"),
         (("tsh", "ft4", "freet4", "ft3", "freet3"), "甲狀腺功能檢查"),
         (("crp", "esr", "pct", "il6"), "發炎與感染指標"),
+        (("ana", "anca", "rf", "ccp", "c3", "c4", "igg", "iga", "igm", "ige", "immunoglobulin", "complement", "dsdna"), "自體免疫與風濕免疫檢查"),
+        (("cortisol", "acth", "insulin", "cpeptide", "prolactin", "lh", "fsh", "estradiol", "testosterone", "progesterone", "hcg"), "內分泌與荷爾蒙檢查"),
         (("troponin", "tni", "ckmb", "bnp", "ntprobnp"), "心臟相關檢查"),
         (("ck", "cpk", "myoglobin"), "肌肉酵素檢查"),
         (("afp", "cea", "ca125", "ca153", "ca199", "psa"), "腫瘤指標"),
@@ -84,7 +87,7 @@ def classify_items(items):
             row = {
                 "key": item.raw_name,
                 "zh": item.raw_name,
-                "en": "",
+                "en": item.raw_name,
                 "result": item.result,
                 "unit": item.unit,
                 "reference": item.reference,

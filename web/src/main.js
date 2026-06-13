@@ -486,6 +486,7 @@ function unknownLocation(source) {
 function inferUnknownBloodCategory(rawName) {
   const name = normalize(rawName);
   const rules = [
+    [/^(hbs|hbe|antihb|hbv|hcv|hiv|rpr|tppa|vdrl|cmv|ebv|covid|sars|influenza)/, "感染血清學檢查"],
     [/^(wbc|rbc|hb|hgb|hct|mcv|mch|mchc|rdw|rdwcv|mpv|plt|platelet|anc|band|neu|neut|lym|lymph|mono|eos|baso|retic)/, "血液常規檢查"],
     [/^(pt|inr|aptt|fibrinogen|fib|ddimer)/, "凝血功能檢查"],
     [/^(ast|got|alt|gpt|alp|ggt|bil|tbil|dbil|ibil|alb|albumin|tp|tpro|ldh)/, "肝膽功能檢查"],
@@ -497,6 +498,8 @@ function inferUnknownBloodCategory(rawName) {
     [/^(iron|fe|tibc|ferritin|tsat|transferrin|b12|folate)/, "鐵質與貧血相關檢查"],
     [/^(tsh|ft4|freet4|ft3|freet3|thyroglobulin)/, "甲狀腺功能檢查"],
     [/^(crp|esr|pct|il6)/, "發炎與感染指標"],
+    [/^(ana|anca|rf|ccp|c3|c4|igg|iga|igm|ige|immunoglobulin|complement|dsdna)/, "自體免疫與風濕免疫檢查"],
+    [/^(cortisol|acth|insulin|cpeptide|prolactin|lh|fsh|estradiol|testosterone|progesterone|hcg)/, "內分泌與荷爾蒙檢查"],
     [/^(troponin|tni|ckmb|bnp|ntprobnp)/, "心臟相關檢查"],
     [/^(ck|cpk|myoglobin)/, "肌肉酵素檢查"],
     [/^(afp|cea|ca125|ca153|ca199|psa)/, "腫瘤指標"],
@@ -532,7 +535,7 @@ let reviewRows = [];
 let reviewedSource = "";
 let previewTimer;
 
-const UNIT_PATTERN = /^(?:%|\/?u?l|10\^\d+\/u?l|g\/dl|mg\/dl|ng\/ml|pg\/ml|mmol\/l|meq\/l|u\/l|iu\/l|miu\/l|uiu\/ml|mg\/g|g\/g|ml\/min(?:\/1\.73m\^?2)?|fl|pg|sec|seconds?|ratio)$/i;
+const UNIT_PATTERN = /^(?:%|‰|\/?(?:u|µ|μ)?l|10\^\d+\/(?:u|µ|μ)?l|(?:f|p|n|µ|μ|m)?g\/(?:d|m)?l|(?:m|µ|μ|n)?mol\/l|m?eq\/l|(?:m|µ|μ|n)?(?:iu|u)\/ml|(?:m|µ|μ|n)?(?:iu|u)\/l|au\/ml|bau\/ml|cu|coi|index|s\/co|copies?\/ml|copies?\/g|mg\/g|g\/g|ml\/min(?:\/1\.73m\^?2)?|fl|pg|sec|seconds?|min|hours?|ratio)$/i;
 const RESULT_PATTERN = /^(?:[<>]=?\s*)?(?:-?\d+(?:\.\d+)?|positive|negative|trace|few|moderate|many|normal|reactive|nonreactive|not detected|detected)$/i;
 const EMPTY_MARKER_PATTERN = /^(?:\(\s*\)|[-–—]|n\/a|na)?$/i;
 
@@ -602,8 +605,8 @@ function smartAlignFields(source) {
   } else if (aligned.result && looksLikeReference(aligned.result)) {
     issues.push("結果欄疑似放入正常值");
   }
-  if (aligned.unit && !looksLikeUnit(aligned.unit)) issues.push("單位格式需確認");
-  if (aligned.reference && !looksLikeReference(aligned.reference)) issues.push("正常值格式需確認");
+  // Hospital systems use many assay-specific units and narrative references.
+  // Preserve unfamiliar values instead of blocking an otherwise valid report.
 
   return { aligned, fixes, issues };
 }
@@ -681,7 +684,7 @@ function buildReviewRows(items) {
       warningText: warnings.join("、"),
       key: canonical || aligned.rawName,
       zh: mapped?.zh || aligned.rawName,
-      en: mapped?.en || "",
+      en: mapped?.en || aligned.rawName,
       result: aligned.result,
       unit: aligned.unit,
       reference: aligned.reference,

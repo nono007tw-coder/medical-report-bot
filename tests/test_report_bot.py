@@ -112,6 +112,27 @@ ALT\t   \t 15 \t(  )\t U/L \t M:<41; F:<33 U/L
         ))
         rows = grouped["驗尿檢查"]["其他尿液檢查"]
         self.assertEqual(rows[0]["zh"], "Unknown Crystal")
+        self.assertEqual(rows[0]["en"], "Unknown Crystal")
+
+    def test_vghtpe_unmapped_assays_keep_original_fields_and_category(self):
+        text = """檢體　　：
+(Specimen type)\tBlood
+項目\tH/L\t結果\t前次結果\t單位\t參考值
+HBsAb quantitative\tH\t156.8\t(  )\tmIU/mL\tNon-reactive: <10
+C-peptide\t\t2.31\t(  )\tng/mL\t1.10~4.40
+Novel Tumor Index\t\t0.82\t(  )\tCOI\tNegative: <1.0
+"""
+        grouped = classify_items(parse_text(text))
+
+        infection = grouped["抽血檢查"]["感染血清學檢查"][0]
+        self.assertEqual(
+            (infection["zh"], infection["en"], infection["result"], infection["unit"]),
+            ("HBsAb quantitative", "HBsAb quantitative", "156.8", "mIU/mL"),
+        )
+        endocrine = grouped["抽血檢查"]["內分泌與荷爾蒙檢查"][0]
+        self.assertEqual((endocrine["result"], endocrine["reference"]), ("2.31", "1.10~4.40"))
+        fallback = grouped["抽血檢查"]["一般生化檢查"][0]
+        self.assertEqual((fallback["result"], fallback["unit"]), ("0.82", "COI"))
 
     def test_duplicate_aliases_are_removed(self):
         grouped = classify_items(parse_text(
