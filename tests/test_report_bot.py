@@ -366,6 +366,16 @@ class ReportTests(unittest.TestCase):
                 for table in doc.tables
                 for row in table.rows
             ))
+            header_alignments = [
+                cell.paragraphs[0].alignment
+                for cell in doc.tables[0].rows[0].cells
+            ]
+            body_alignments = [
+                cell.paragraphs[0].alignment
+                for cell in doc.tables[0].rows[1].cells
+            ]
+            self.assertEqual(header_alignments, [1, 1, 1, 1])
+            self.assertEqual(body_alignments, [None, None, 1, 1])
             self.assertGreater(doc.sections[0].page_width, doc.sections[0].page_height)
             image_text = doc.tables[-1].rows[1].cells[2].text
             self.assertIn("Finding: Test finding.", image_text)

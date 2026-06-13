@@ -122,9 +122,7 @@ def style_table(table, header_widths_cm, body_center_columns=(2, 3)):
                 paragraph.paragraph_format.space_before = Pt(0)
                 paragraph.paragraph_format.space_after = Pt(0)
                 paragraph.paragraph_format.line_spacing = 1.05
-                if (row_index == 0 and col_index >= 2) or (
-                    row_index > 0 and col_index in body_center_columns
-                ):
+                if row_index == 0 or (row_index > 0 and col_index in body_center_columns):
                     paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 for run in paragraph.runs:
                     set_run_font(run, size=9, bold=(row_index == 0 or bool(run.bold)))

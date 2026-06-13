@@ -961,7 +961,6 @@ function textParagraph(text, { bold = false, center = false, size = 18 } = {}) {
   return new Paragraph({
     alignment: center ? AlignmentType.CENTER : AlignmentType.LEFT,
     spacing: { before: 0, after: 0 },
-    keepLines: true,
     children: [new TextRun({ text, bold, size, font: "Arial", eastAsia: "Microsoft JhengHei" })],
   });
 }
@@ -970,7 +969,7 @@ function cell(text, width, options = {}) {
   return new TableCell({
     width: { size: width, type: WidthType.DXA },
     verticalAlign: VerticalAlign.CENTER,
-    margins: { top: 90, bottom: 90, left: 100, right: 100 },
+    margins: { top: 110, bottom: 110, left: 130, right: 130 },
     shading: options.header
       ? { type: ShadingType.CLEAR, fill: "D9EAF7" }
       : options.fill
@@ -992,7 +991,7 @@ function labTable(rows) {
         tableHeader: true,
         cantSplit: true,
         children: ["中文項目", "英文項目", "結果", "正常值"].map((value, index) =>
-          cell(value, widths[index], { header: true, bold: true, center: index >= 2 })
+          cell(value, widths[index], { header: true, bold: true, center: true })
         ),
       }),
       ...rows.map((row, rowIndex) => {
@@ -1104,13 +1103,13 @@ function makePdfReport(grouped) {
       const headerWidths = ["20%", "32%", "19%", "29%"];
       table.innerHTML = `
         <thead style="display:table-header-group;"><tr>${headers.map((header, index) =>
-          `<th style="width:${headerWidths[index]};padding:2.4mm 2mm;text-align:${index >= 2 ? "center" : "left"};background:#dcecf5;border:1px solid #8198a7;color:#173b55;font-weight:700;">${header}</th>`
+          `<th style="width:${headerWidths[index]};padding:2.6mm 2.2mm;text-align:center;background:#dcecf5;border:1px solid #9aabb7;color:#173b55;font-weight:700;letter-spacing:.04em;">${header}</th>`
         ).join("")}</tr></thead>
         <tbody>${rows.map((row, rowIndex) => `<tr data-report-row style="break-inside:avoid;page-break-inside:avoid;background:${rowIndex % 2 ? "#f7fafc" : "#ffffff"};">
-            <td style="padding:2.3mm 2mm;border:1px solid #8198a7;vertical-align:middle;white-space:nowrap;font-weight:700;">${escapeHtml(row.zh)}</td>
-            <td style="padding:2.3mm 2mm;border:1px solid #8198a7;vertical-align:middle;line-height:1.35;overflow-wrap:normal;word-break:keep-all;">${escapeHtml(row.en)}</td>
-            <td style="padding:2.3mm 2mm;border:1px solid #8198a7;vertical-align:middle;text-align:${row.isImage ? "left" : "center"};white-space:${row.isImage ? "pre-wrap" : "nowrap"};font-weight:${["H", "L"].includes(row.flag) ? "700" : "500"};">${escapeHtml(row.isImage ? row.rawText : [row.result, row.unit].filter(Boolean).join(" "))}</td>
-            <td style="padding:2.3mm 2mm;border:1px solid #8198a7;vertical-align:middle;text-align:center;line-height:1.35;">${escapeHtml(row.reference)}</td>
+            <td style="padding:2.5mm 2.2mm;border:1px solid #9aabb7;vertical-align:middle;text-align:left;white-space:nowrap;font-weight:700;">${escapeHtml(row.zh)}</td>
+            <td style="padding:2.5mm 2.2mm;border:1px solid #9aabb7;vertical-align:middle;text-align:left;line-height:1.4;overflow-wrap:normal;word-break:keep-all;">${escapeHtml(row.en)}</td>
+            <td style="padding:2.5mm 2.2mm;border:1px solid #9aabb7;vertical-align:middle;text-align:${row.isImage ? "left" : "center"};white-space:${row.isImage ? "pre-wrap" : "nowrap"};font-variant-numeric:tabular-nums;font-weight:${["H", "L"].includes(row.flag) ? "700" : "500"};">${escapeHtml(row.isImage ? row.rawText : [row.result, row.unit].filter(Boolean).join(" "))}</td>
+            <td style="padding:2.5mm 2.2mm;border:1px solid #9aabb7;vertical-align:middle;text-align:center;line-height:1.4;font-variant-numeric:tabular-nums;">${escapeHtml(row.reference)}</td>
           </tr>`).join("")}</tbody>`;
       categoryBlock.appendChild(table);
       sectionBlock.appendChild(categoryBlock);

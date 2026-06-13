@@ -175,12 +175,12 @@ textarea::placeholder { color: #9cabb1; }
 .preview-table { width: 100%; min-width: 1080px; border-collapse: collapse; table-layout: fixed; }
 .preview-table th {
   padding: 12px 10px; color: #173b55; background: #dcecf5;
-  border: 1px solid #b7cbd5; font-size: 11px; text-align: left;
+  border: 1px solid #b7cbd5; font-size: 11px; text-align: center;
 }
 .preview-table th:nth-child(1) { width: 20%; }
 .preview-table th:nth-child(2) { width: 32%; }
-.preview-table th:nth-child(3) { width: 19%; text-align: center; }
-.preview-table th:nth-child(4) { width: 29%; text-align: center; }
+.preview-table th:nth-child(3) { width: 19%; }
+.preview-table th:nth-child(4) { width: 29%; }
 .preview-table td { padding: 9px; border: 1px solid #d8e3e8; vertical-align: middle; }
 .preview-table tr:last-child td { border-bottom: 0; }
 .preview-table .preview-section-row td {
