@@ -532,47 +532,168 @@ let reviewRows = [];
 let reviewedSource = "";
 let previewTimer;
 
+const UNIT_PATTERN = /^(?:%|\/?u?l|10\^\d+\/u?l|g\/dl|mg\/dl|ng\/ml|pg\/ml|mmol\/l|meq\/l|u\/l|iu\/l|miu\/l|uiu\/ml|mg\/g|g\/g|ml\/min(?:\/1\.73m\^?2)?|fl|pg|sec|seconds?|ratio)$/i;
+const RESULT_PATTERN = /^(?:[<>]=?\s*)?(?:-?\d+(?:\.\d+)?|positive|negative|trace|few|moderate|many|normal|reactive|nonreactive|not detected|detected)$/i;
+const EMPTY_MARKER_PATTERN = /^(?:\(\s*\)|[-–—]|n\/a|na)?$/i;
+
+function cleanField(value) {
+  return String(value || "").replace(/\u00a0/g, " ").trim();
+}
+
+function looksLikeUnit(value) {
+  const normalized = cleanField(value).replace(/\s+/g, "");
+  return Boolean(normalized && UNIT_PATTERN.test(normalized));
+}
+
+function looksLikeReference(value) {
+  const normalized = cleanField(value);
+  if (!normalized) return false;
+  return (
+    /(?:[<>]=?|~|–|—|\bto\b)\s*-?\d/i.test(normalized) ||
+    /\d\s*-\s*\d/.test(normalized) ||
+    /\b(?:male|female|healthy|prediabetes|diabetes|deficiency|insufficiency|recommendation|normal|negative|nonreactive)\b/i.test(normalized)
+  );
+}
+
+function looksLikeResult(value) {
+  const normalized = cleanField(value);
+  return Boolean(normalized && RESULT_PATTERN.test(normalized));
+}
+
+function splitResultAndUnit(value) {
+  const match = cleanField(value).match(/^((?:[<>]=?\s*)?-?\d+(?:\.\d+)?)\s+(.+)$/);
+  if (!match || !looksLikeUnit(match[2])) return null;
+  return { result: match[1], unit: match[2] };
+}
+
+function smartAlignFields(source) {
+  const aligned = {
+    ...source,
+    result: cleanField(source.result),
+    unit: cleanField(source.unit),
+    reference: cleanField(source.reference),
+    flag: cleanField(source.flag).toUpperCase(),
+  };
+  const fixes = [];
+  const issues = [];
+
+  if (EMPTY_MARKER_PATTERN.test(aligned.result)) aligned.result = "";
+  if (EMPTY_MARKER_PATTERN.test(aligned.unit)) aligned.unit = "";
+  if (EMPTY_MARKER_PATTERN.test(aligned.reference)) aligned.reference = "";
+
+  const combined = splitResultAndUnit(aligned.result);
+  if (combined && !aligned.unit) {
+    aligned.result = combined.result;
+    aligned.unit = combined.unit;
+    fixes.push("已拆分結果與單位");
+  }
+  if (!aligned.result && looksLikeResult(aligned.unit)) {
+    aligned.result = aligned.unit;
+    aligned.unit = "";
+    fixes.push("已將數值移回結果欄");
+  }
+  if (!aligned.reference && looksLikeReference(aligned.unit) && !looksLikeUnit(aligned.unit)) {
+    aligned.reference = aligned.unit;
+    aligned.unit = "";
+    fixes.push("已將範圍移回正常值欄");
+  }
+  if (aligned.result && !looksLikeResult(aligned.result) && looksLikeUnit(aligned.result)) {
+    issues.push("結果欄疑似放入單位");
+  } else if (aligned.result && looksLikeReference(aligned.result)) {
+    issues.push("結果欄疑似放入正常值");
+  }
+  if (aligned.unit && !looksLikeUnit(aligned.unit)) issues.push("單位格式需確認");
+  if (aligned.reference && !looksLikeReference(aligned.reference)) issues.push("正常值格式需確認");
+
+  return { aligned, fixes, issues };
+}
+
+function assessReviewRow({ mapped, isDuplicate, hasContent, fixes, issues }) {
+  const notices = [...fixes];
+  const critical = [...issues];
+  if (!mapped) notices.push("未識別項目");
+  if (!hasContent) critical.push("沒有可輸出的結果");
+  if (isDuplicate) notices.push("重複項目");
+  const confidence = critical.length
+    ? "needs-review"
+    : isDuplicate || !mapped
+      ? "notice"
+      : fixes.length
+        ? "corrected"
+        : "ready";
+  return {
+    confidence,
+    warning: notices.length > 0 || critical.length > 0,
+    warningText: critical[0] || notices.join("、") || "可使用",
+    included: hasContent && !isDuplicate && critical.length === 0,
+  };
+}
+
+function refreshRowAssessment(row) {
+  const { aligned, fixes, issues } = smartAlignFields(row);
+  row.result = aligned.result;
+  row.unit = aligned.unit;
+  row.reference = aligned.reference;
+  row.flag = aligned.flag;
+  const hasContent = Boolean(row.isImage || row.result || row.unit || row.reference);
+  Object.assign(row, assessReviewRow({
+    mapped: row._mapped,
+    isDuplicate: row._duplicate,
+    hasContent,
+    fixes,
+    issues,
+  }));
+}
+
 function buildReviewRows(items) {
   const seen = new Set();
   return items.map((source, position) => {
-    const canonical = aliasIndex.get(normalize(source.rawName));
+    const { aligned, fixes, issues } = smartAlignFields(source);
+    const canonical = aliasIndex.get(normalize(aligned.rawName));
     const mapped = canonical ? mapping[canonical] : null;
     const [section, category] = mapped
       ? [mapped.section, mapped.category]
-      : unknownLocation(source);
-    const reportGroup = inferReportGroup(section, category, source);
-    const dedupeKey = canonical || normalize(source.rawName) || `unknown-${position}`;
+      : unknownLocation(aligned);
+    const reportGroup = inferReportGroup(section, category, aligned);
+    const dedupeKey = canonical || normalize(aligned.rawName) || `unknown-${position}`;
     const isDuplicate = seen.has(dedupeKey);
-    seen.add(dedupeKey);
     const hasContent = Boolean(
-      source.isImage ||
-      source.result.trim() ||
-      source.unit.trim() ||
-      source.reference.trim(),
+      aligned.isImage ||
+      aligned.result ||
+      aligned.unit ||
+      aligned.reference,
     );
+    if (!isDuplicate && hasContent && issues.length === 0) seen.add(dedupeKey);
     if (mapped && !hasContent) return null;
     const warnings = [];
     if (!mapped) warnings.push("未辨識項目");
     if (!hasContent) warnings.push("沒有結果");
     if (isDuplicate) warnings.push("重複項目");
 
+    const assessment = assessReviewRow({
+      mapped, isDuplicate, hasContent, fixes, issues,
+    });
+
     return {
       id: position,
       included: hasContent && !isDuplicate,
       warning: warnings.length > 0,
       warningText: warnings.join("、"),
-      key: canonical || source.rawName,
-      zh: mapped?.zh || source.rawName,
+      key: canonical || aligned.rawName,
+      zh: mapped?.zh || aligned.rawName,
       en: mapped?.en || "",
-      result: source.result,
-      unit: source.unit,
-      reference: source.reference,
-      flag: source.flag,
-      rawText: source.rawText,
+      result: aligned.result,
+      unit: aligned.unit,
+      reference: aligned.reference,
+      flag: aligned.flag,
+      rawText: aligned.rawText,
       isImage: source.isImage || section === "影像檢查",
       section,
       category,
       reportGroup,
+      ...assessment,
+      _mapped: Boolean(mapped),
+      _duplicate: isDuplicate,
       order: mapped?.order ?? 99999 + position,
     };
   }).filter(Boolean);
@@ -607,7 +728,9 @@ function renderPreview() {
   previewBody.replaceChildren();
   for (const row of reviewRows) {
     const tr = document.createElement("tr");
-    if (row.warning) tr.className = "warning-row";
+    if (row.confidence === "needs-review") tr.className = "warning-row critical-row";
+    else if (row.confidence === "notice") tr.className = "warning-row";
+    else if (row.confidence === "corrected") tr.className = "corrected-row";
 
     const includeCell = document.createElement("td");
     const include = document.createElement("input");
@@ -662,7 +785,7 @@ function renderPreview() {
 
     const statusCell = document.createElement("td");
     const badge = document.createElement("span");
-    badge.className = `preview-status ${row.warning ? "warning" : "ok"}`;
+    badge.className = `preview-status ${row.confidence || (row.warning ? "warning" : "ok")}`;
     badge.textContent = row.warning ? row.warningText : "可使用";
     statusCell.appendChild(badge);
     tr.appendChild(statusCell);
@@ -674,9 +797,14 @@ function renderPreview() {
 
 function updatePreviewSummary() {
   const included = reviewRows.filter((row) => row.included).length;
-  const warnings = reviewRows.filter((row) => row.warning).length;
-  previewSummary.textContent = `共辨識 ${reviewRows.length} 列，目前輸出 ${included} 列；${warnings} 列建議確認。`;
-  const canDownload = included > 0;
+  const corrected = reviewRows.filter((row) => row.confidence === "corrected").length;
+  const needsReview = reviewRows.filter((row) => row.confidence === "needs-review").length;
+  const notices = reviewRows.filter((row) => row.confidence === "notice").length;
+  const unresolved = reviewRows.filter(
+    (row) => row.included && row.confidence === "needs-review",
+  ).length;
+  previewSummary.textContent = `智慧辨識 ${reviewRows.length} 列，目前輸出 ${included} 列；自動校正 ${corrected} 列，需確認 ${needsReview} 列，提示 ${notices} 列。`;
+  const canDownload = included > 0 && unresolved === 0;
   generateButton.disabled = !canDownload;
   pdfButton.disabled = !canDownload;
 }
@@ -868,6 +996,12 @@ function getReportData() {
   if (!reviewedSource || reviewedSource !== text) {
     throw new Error("內容尚未預覽，請先按「整理並預覽」");
   }
+  const unresolved = reviewRows.filter(
+    (row) => row.included && row.confidence === "needs-review",
+  );
+  if (unresolved.length) {
+    throw new Error(`尚有 ${unresolved.length} 個欄位需要確認，請先修正黃色項目`);
+  }
   const grouped = groupReviewRows(reviewRows);
   const count = Object.values(grouped).reduce(
     (total, categories) => total + Object.values(categories).reduce((sum, rows) => sum + rows.length, 0),
@@ -923,6 +1057,9 @@ previewBody.addEventListener("input", (event) => {
   const row = reviewRows.find((entry) => entry.id === Number(control.dataset.id));
   if (!row) return;
   row[control.dataset.field] = control.type === "checkbox" ? control.checked : control.value;
+  if (control.dataset.field !== "included" && control.dataset.field !== "reportGroup") {
+    refreshRowAssessment(row);
+  }
   updatePreviewSummary();
 });
 
@@ -932,7 +1069,12 @@ previewBody.addEventListener("change", (event) => {
   const row = reviewRows.find((entry) => entry.id === Number(control.dataset.id));
   if (!row) return;
   row[control.dataset.field] = control.type === "checkbox" ? control.checked : control.value;
-  updatePreviewSummary();
+  if (control.dataset.field !== "included" && control.dataset.field !== "reportGroup") {
+    refreshRowAssessment(row);
+    renderPreview();
+  } else {
+    updatePreviewSummary();
+  }
 });
 
 generateButton.addEventListener("click", async () => {
