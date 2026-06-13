@@ -809,6 +809,124 @@ function updatePreviewSummary() {
   pdfButton.disabled = !canDownload;
 }
 
+function createPreviewInput(row, field, className = "") {
+  const input = document.createElement("input");
+  input.type = "text";
+  input.value = row[field] || "";
+  input.dataset.id = row.id;
+  input.dataset.field = field;
+  input.className = className;
+  input.setAttribute("aria-label", field);
+  return input;
+}
+
+function renderPreviewFourColumns() {
+  previewBody.replaceChildren();
+
+  const orderedRows = [...reviewRows].sort((left, right) => {
+    const leftGroup = REPORT_GROUP_ORDER.indexOf(left.reportGroup);
+    const rightGroup = REPORT_GROUP_ORDER.indexOf(right.reportGroup);
+    if (leftGroup !== rightGroup) return leftGroup - rightGroup;
+
+    const groupOrder = REPORT_CATEGORY_ORDER[left.reportGroup] || [];
+    const leftCategory = groupOrder.indexOf(categoryForGroup(left));
+    const rightCategory = groupOrder.indexOf(categoryForGroup(right));
+    if (leftCategory !== rightCategory) return leftCategory - rightCategory;
+    return (left.order ?? 0) - (right.order ?? 0) || left.id - right.id;
+  });
+
+  let lastSectionKey = "";
+  for (const row of orderedRows) {
+    const category = categoryForGroup(row);
+    const sectionKey = `${row.reportGroup}|${category}`;
+    if (sectionKey !== lastSectionKey) {
+      const sectionRow = document.createElement("tr");
+      sectionRow.className = "preview-section-row";
+      const sectionCell = document.createElement("td");
+      sectionCell.colSpan = 4;
+      sectionCell.textContent = `${row.reportGroup} · ${PATIENT_CATEGORY_LABELS[category] || category}`;
+      sectionRow.append(sectionCell);
+      previewBody.append(sectionRow);
+      lastSectionKey = sectionKey;
+    }
+
+    const tr = document.createElement("tr");
+    if (row.confidence === "needs-review") tr.className = "warning-row critical-row";
+    else if (row.confidence === "notice") tr.className = "warning-row";
+    else if (row.confidence === "corrected") tr.className = "corrected-row";
+
+    const zhCell = document.createElement("td");
+    const zhStack = document.createElement("div");
+    zhStack.className = "preview-cell-stack";
+    const zhLine = document.createElement("div");
+    zhLine.className = "preview-cell-line";
+    const included = document.createElement("input");
+    included.type = "checkbox";
+    included.className = "preview-check";
+    included.checked = row.included;
+    included.dataset.id = row.id;
+    included.dataset.field = "included";
+    included.setAttribute("aria-label", "是否輸出");
+    zhLine.append(included, createPreviewInput(row, "zh"));
+
+    const groupSelect = document.createElement("select");
+    groupSelect.dataset.id = row.id;
+    groupSelect.dataset.field = "reportGroup";
+    groupSelect.className = "group-select";
+    groupSelect.setAttribute("aria-label", "報告分類");
+    for (const group of REPORT_GROUP_ORDER) {
+      const option = document.createElement("option");
+      option.value = group;
+      option.textContent = group;
+      option.selected = row.reportGroup === group;
+      groupSelect.append(option);
+    }
+    zhStack.append(zhLine, groupSelect);
+    zhCell.append(zhStack);
+
+    const enCell = document.createElement("td");
+    enCell.append(createPreviewInput(row, "en"));
+
+    const resultCell = document.createElement("td");
+    const resultStack = document.createElement("div");
+    resultStack.className = "preview-cell-stack";
+    const resultLine = document.createElement("div");
+    resultLine.className = "preview-cell-line";
+    resultLine.append(
+      createPreviewInput(row, "result", "result-input"),
+      createPreviewInput(row, "unit", "unit-input"),
+    );
+    const flagSelect = document.createElement("select");
+    flagSelect.dataset.id = row.id;
+    flagSelect.dataset.field = "flag";
+    flagSelect.setAttribute("aria-label", "高低標記");
+    for (const [value, label] of [["", "正常"], ["H", "H（偏高）"], ["L", "L（偏低）"]]) {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = label;
+      option.selected = row.flag === value;
+      flagSelect.append(option);
+    }
+    resultStack.append(resultLine, flagSelect);
+    resultCell.append(resultStack);
+
+    const referenceCell = document.createElement("td");
+    const referenceStack = document.createElement("div");
+    referenceStack.className = "preview-cell-stack";
+    referenceStack.append(createPreviewInput(row, "reference"));
+    const badge = document.createElement("span");
+    badge.className = `preview-status ${row.confidence || (row.warning ? "warning" : "ok")}`;
+    badge.textContent = row.warning ? row.warningText : "已對齊";
+    referenceStack.append(badge);
+    referenceCell.append(referenceStack);
+
+    tr.append(zhCell, enCell, resultCell, referenceCell);
+    previewBody.append(tr);
+  }
+
+  updatePreviewSummary();
+}
+
 function invalidatePreview(message = "內容已變更，請重新按「整理並預覽」。") {
   reviewedSource = "";
   reviewRows = [];
@@ -826,7 +944,7 @@ function preparePreview({ scroll = false } = {}) {
   }
   reviewRows = buildReviewRows(parseText(text));
   reviewedSource = text;
-  renderPreview();
+  renderPreviewFourColumns();
   previewPanel.hidden = false;
   if (scroll) previewPanel.scrollIntoView({ behavior: "smooth", block: "start" });
   setStatus("預覽已建立。若沒有黃色異常，可直接下載報告。", "success");
@@ -861,9 +979,9 @@ function cell(text, width, options = {}) {
 }
 
 function labTable(rows) {
-  const widths = [1800, 3000, 1800, 2760];
+  const widths = [2800, 5000, 2800, 4538];
   return new Table({
-    width: { size: 9360, type: WidthType.DXA },
+    width: { size: 15138, type: WidthType.DXA },
     columnWidths: widths,
     layout: TableLayoutType.FIXED,
     rows: [
@@ -928,8 +1046,8 @@ async function makeDocx(grouped) {
     sections: [{
       properties: {
         page: {
-          size: { width: 11906, height: 16838, orientation: PageOrientation.PORTRAIT },
-          margin: { top: 1020, right: 964, bottom: 1020, left: 964 },
+          size: { width: 11906, height: 16838, orientation: PageOrientation.LANDSCAPE },
+          margin: { top: 850, right: 850, bottom: 850, left: 850 },
         },
       },
       children,
@@ -951,9 +1069,10 @@ function makePdfReport(grouped) {
   const root = document.createElement("div");
   root.className = "pdf-report";
   root.style.cssText = `
-    position: fixed; left: 0; top: 0; z-index: 2147483647; width: 190mm;
+    position: fixed; left: 0; top: 0; z-index: 2147483647; width: 283mm;
+    box-sizing: border-box;
     max-height: none; overflow: visible; pointer-events: none;
-    padding: 8mm 8mm 10mm; color: #17304c; background: #fff;
+    padding: 7mm 8mm 9mm; color: #17304c; background: #fff;
     font-family: "Microsoft JhengHei", "Noto Sans TC", Arial, sans-serif;
     font-size: 10px; line-height: 1.45;
   `;
@@ -1117,7 +1236,7 @@ previewBody.addEventListener("change", (event) => {
   row[control.dataset.field] = control.type === "checkbox" ? control.checked : control.value;
   if (control.dataset.field !== "included" && control.dataset.field !== "reportGroup") {
     refreshRowAssessment(row);
-    renderPreview();
+    renderPreviewFourColumns();
   } else {
     updatePreviewSummary();
   }
@@ -1167,9 +1286,9 @@ pdfButton.addEventListener("click", async () => {
       });
       if (!canvas.width || !canvas.height) throw new Error("報告畫面建立失敗");
 
-      const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait", compress: true });
-      const pageWidthMm = 196;
-      const pageHeightMm = 282;
+      const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "landscape", compress: true });
+      const pageWidthMm = 283;
+      const pageHeightMm = 196;
       const pagePixelHeight = Math.floor(canvas.width * pageHeightMm / pageWidthMm);
       const rowRanges = getPdfRowRanges(report, canvas);
       let sourceY = 0;

@@ -46,7 +46,7 @@ def _add_lab_table(doc, rows):
         if row["flag"] in {"H", "L"}:
             for run in cells[2].paragraphs[0].runs:
                 run.bold = True
-    style_table(table, [3.2, 6.0, 3.0, 4.9])
+    style_table(table, [5.0, 9.0, 4.8, 7.9])
 
 
 def _patient_group(section, category):

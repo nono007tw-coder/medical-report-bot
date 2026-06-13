@@ -345,6 +345,7 @@ class ReportTests(unittest.TestCase):
                 for table in doc.tables
                 for row in table.rows
             ))
+            self.assertGreater(doc.sections[0].page_width, doc.sections[0].page_height)
             image_text = doc.tables[-1].rows[1].cells[2].text
             self.assertIn("Finding: Test finding.", image_text)
             self.assertIn("Impression: Test impression.", image_text)

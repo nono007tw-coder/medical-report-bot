@@ -21,13 +21,13 @@ def set_run_font(run, size=10, bold=False, color=DARK):
 
 def configure_document(doc):
     section = doc.sections[0]
-    section.orientation = WD_ORIENT.PORTRAIT
-    section.page_width = Cm(21)
-    section.page_height = Cm(29.7)
-    section.top_margin = Cm(1.8)
-    section.bottom_margin = Cm(1.8)
-    section.left_margin = Cm(1.7)
-    section.right_margin = Cm(1.7)
+    section.orientation = WD_ORIENT.LANDSCAPE
+    section.page_width = Cm(29.7)
+    section.page_height = Cm(21)
+    section.top_margin = Cm(1.5)
+    section.bottom_margin = Cm(1.5)
+    section.left_margin = Cm(1.5)
+    section.right_margin = Cm(1.5)
 
     normal = doc.styles["Normal"]
     normal.font.name = FONT_EN
