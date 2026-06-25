@@ -68,6 +68,36 @@ def _parse_delimited(line, specimen):
             specimen=specimen,
             raw_text=line,
         )
+    if (
+        delimiter == "\t"
+        and len(parts) >= 4
+        and (parts[1].upper() in {"H", "L"} or not parts[1])
+        and _clean_result(parts[2])
+    ):
+        return ParsedItem(
+            raw_name=parts[0],
+            result=_clean_result(parts[2]),
+            unit=parts[3],
+            reference=" ".join(part for part in parts[4:] if part),
+            flag=parts[1].upper(),
+            specimen=specimen,
+            raw_text=line,
+        )
+    if (
+        delimiter == "\t"
+        and len(parts) >= 4
+        and _clean_result(parts[1])
+        and re.fullmatch(r"\(\s*.*?\s*\)", parts[2])
+    ):
+        return ParsedItem(
+            raw_name=parts[0],
+            result=_clean_result(parts[1]),
+            unit=parts[3],
+            reference=" ".join(part for part in parts[4:] if part),
+            flag="",
+            specimen=specimen,
+            raw_text=line,
+        )
     if len(parts) >= 2:
         name, result = parts[0], _clean_result(parts[1])
         unit = parts[2] if len(parts) > 2 else ""

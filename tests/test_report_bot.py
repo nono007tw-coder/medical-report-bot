@@ -89,6 +89,25 @@ ALT\t   \t 15 \t(  )\t U/L \t M:<41; F:<33 U/L
             ("", "15", "U/L", "M:<41; F:<33 U/L"),
         )
 
+    def test_hospital_copied_rows_with_missing_previous_result_column(self):
+        text = """檢體　　：
+(Specimen type)\tBlood
+項目\tH/L\t結果\t單位\t參考值
+Na\tL\t133\tmmol/L\t136~145 mmol/L
+K\t\t4.3\t(  )\tmmol/L\t3.5~5.1 mmol/L
+Creat\tH\t6.34\tmg/dL\tM:0.7~1.2; F:0.5-0.9 mg/dL
+"""
+        items = parse_text(text)
+
+        self.assertEqual(
+            [(item.raw_name, item.flag, item.result, item.unit, item.reference) for item in items],
+            [
+                ("Na", "L", "133", "mmol/L", "136~145 mmol/L"),
+                ("K", "", "4.3", "mmol/L", "3.5~5.1 mmol/L"),
+                ("Creat", "H", "6.34", "mg/dL", "M:0.7~1.2; F:0.5-0.9 mg/dL"),
+            ],
+        )
+
     def test_pipe_format_and_parentheses(self):
         items = parse_text("SPECIMEN: BLOOD\nCreatinine | ( 2.10 ) | mg/dL | 0.5-1.1 | H")
         self.assertEqual(items[0].result, "2.10")

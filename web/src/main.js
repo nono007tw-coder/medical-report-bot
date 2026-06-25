@@ -392,7 +392,7 @@ function parseResultLine(line, specimen) {
       delimiter === "\t" &&
       parts.length >= 4 &&
       (["H", "L"].includes(parts[1].toUpperCase()) || parts[1] === "") &&
-      /^\(\s*.*?\s*\)$/.test(parts[3])
+      /^\(\s*.*?\s*\)$/.test(parts[3] || "")
     ) {
       return item(
         parts[0],
@@ -400,6 +400,40 @@ function parseResultLine(line, specimen) {
         parts[4] || "",
         parts.slice(5).filter(Boolean).join(" "),
         parts[1].toUpperCase(),
+        specimen,
+        line,
+      );
+    }
+
+    if (
+      delimiter === "\t" &&
+      parts.length >= 4 &&
+      (["H", "L"].includes(parts[1].toUpperCase()) || parts[1] === "") &&
+      cleanResult(parts[2])
+    ) {
+      return item(
+        parts[0],
+        cleanResult(parts[2]),
+        parts[3] || "",
+        parts.slice(4).filter(Boolean).join(" "),
+        parts[1].toUpperCase(),
+        specimen,
+        line,
+      );
+    }
+
+    if (
+      delimiter === "\t" &&
+      parts.length >= 4 &&
+      cleanResult(parts[1]) &&
+      /^\(\s*.*?\s*\)$/.test(parts[2])
+    ) {
+      return item(
+        parts[0],
+        cleanResult(parts[1]),
+        parts[3] || "",
+        parts.slice(4).filter(Boolean).join(" "),
+        "",
         specimen,
         line,
       );
@@ -584,6 +618,15 @@ function smartAlignFields(source) {
   if (EMPTY_MARKER_PATTERN.test(aligned.unit)) aligned.unit = "";
   if (EMPTY_MARKER_PATTERN.test(aligned.reference)) aligned.reference = "";
 
+  if (["H", "L"].includes(aligned.result) && looksLikeResult(aligned.unit)) {
+    const shiftedReference = aligned.reference;
+    aligned.flag = aligned.result;
+    aligned.result = aligned.unit;
+    aligned.unit = looksLikeUnit(shiftedReference) ? shiftedReference : "";
+    aligned.reference = looksLikeUnit(shiftedReference) ? "" : shiftedReference;
+    fixes.push("已修正 H/L 與結果欄錯位");
+  }
+
   const combined = splitResultAndUnit(aligned.result);
   if (combined && !aligned.unit) {
     aligned.result = combined.result;
@@ -600,10 +643,22 @@ function smartAlignFields(source) {
     aligned.unit = "";
     fixes.push("已將範圍移回正常值欄");
   }
+  if (!aligned.unit && aligned.reference && looksLikeUnit(aligned.reference)) {
+    aligned.unit = aligned.reference;
+    aligned.reference = "";
+    fixes.push("已將單位移回單位欄");
+  }
   if (aligned.result && !looksLikeResult(aligned.result) && looksLikeUnit(aligned.result)) {
     issues.push("結果欄疑似放入單位");
   } else if (aligned.result && looksLikeReference(aligned.result)) {
     issues.push("結果欄疑似放入正常值");
+  }
+  if (!aligned.result && (aligned.unit || aligned.reference)) issues.push("結果欄空白但後方仍有資料");
+  if (aligned.unit && looksLikeReference(aligned.unit) && !looksLikeUnit(aligned.unit)) {
+    issues.push("單位欄疑似放入正常值");
+  }
+  if (aligned.reference && looksLikeUnit(aligned.reference)) {
+    issues.push("正常值欄疑似放入單位");
   }
   // Hospital systems use many assay-specific units and narrative references.
   // Preserve unfamiliar values instead of blocking an otherwise valid report.
