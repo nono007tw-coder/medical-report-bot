@@ -21,6 +21,112 @@ import { jsPDF } from "jspdf";
 import mapping from "./mapping.json";
 import "./styles.css";
 
+const DAILY_KIDNEY_THEMES = [
+  {
+    label: "Sunday Glomerular Calm",
+    title: "週日 · 腎絲球靜謐藍",
+    summary: "以腎絲球過濾為靈感，讓報告閱讀節奏更沉穩。",
+    accent: "#7c8fe8",
+    accentDark: "#4657a8",
+    navy: "#111a3d",
+    navySoft: "#23305d",
+    mist: "#eef1ff",
+    glowRgb: "124, 143, 232",
+  },
+  {
+    label: "Monday Renal Clarity",
+    title: "週一 · 腎功能清晰藍",
+    summary: "聚焦 eGFR、肌酸酐與趨勢判讀，開週保持清楚。",
+    accent: "#2fa7d6",
+    accentDark: "#17769b",
+    navy: "#082437",
+    navySoft: "#123d56",
+    mist: "#e7f5fb",
+    glowRgb: "47, 167, 214",
+  },
+  {
+    label: "Tuesday Electrolyte Balance",
+    title: "週二 · 電解質平衡綠",
+    summary: "以鈉鉀鈣磷的平衡感，呈現穩定而乾淨的介面。",
+    accent: "#2dbb8f",
+    accentDark: "#168167",
+    navy: "#0b2f2d",
+    navySoft: "#164840",
+    mist: "#e8f8f2",
+    glowRgb: "45, 187, 143",
+  },
+  {
+    label: "Wednesday Proteinuria Focus",
+    title: "週三 · 蛋白尿焦點紫",
+    summary: "強調 Pro/Cr、ACR 等腎臟風險指標，畫面更有辨識度。",
+    accent: "#9b72d9",
+    accentDark: "#6542a3",
+    navy: "#22183f",
+    navySoft: "#3a2b63",
+    mist: "#f2ebfb",
+    glowRgb: "155, 114, 217",
+  },
+  {
+    label: "Thursday Dialysis Precision",
+    title: "週四 · 透析精準青",
+    summary: "以透析照護的精準與規律，保持輸出流程明確。",
+    accent: "#20b9c8",
+    accentDark: "#0e7e8a",
+    navy: "#082c35",
+    navySoft: "#124854",
+    mist: "#e5f8fa",
+    glowRgb: "32, 185, 200",
+  },
+  {
+    label: "Friday Mineral Bone",
+    title: "週五 · 礦物骨病暖金",
+    summary: "以鈣磷副甲狀腺軸線為主題，讓介面帶一點溫度。",
+    accent: "#d39b31",
+    accentDark: "#966719",
+    navy: "#2c2412",
+    navySoft: "#4b3b1d",
+    mist: "#fbf3df",
+    glowRgb: "211, 155, 49",
+  },
+  {
+    label: "Saturday Transplant Hope",
+    title: "週六 · 移植希望墨綠",
+    summary: "用柔和墨綠呈現長期追蹤、穩定照護與希望感。",
+    accent: "#4ca66a",
+    accentDark: "#2d7446",
+    navy: "#10291e",
+    navySoft: "#1e4631",
+    mist: "#eaf6ee",
+    glowRgb: "76, 166, 106",
+  },
+];
+
+function applyDailyKidneyTheme() {
+  const theme = DAILY_KIDNEY_THEMES[new Date().getDay()];
+  const root = document.documentElement;
+  root.style.setProperty("--navy", theme.navy);
+  root.style.setProperty("--navy-soft", theme.navySoft);
+  root.style.setProperty("--teal", theme.accent);
+  root.style.setProperty("--teal-dark", theme.accentDark);
+  root.style.setProperty("--mist", theme.mist);
+  root.style.setProperty("--theme-glow-rgb", theme.glowRgb);
+
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme.navy);
+  const navBadge = document.querySelector(".nav-badge");
+  if (navBadge?.lastChild) navBadge.lastChild.textContent = ` ${theme.title}`;
+  const eyebrow = document.querySelector(".eyebrow");
+  if (eyebrow) eyebrow.lastChild.textContent = ` ${theme.label}`;
+  const privacyLabel = document.querySelector(".privacy-label");
+  if (privacyLabel) privacyLabel.textContent = "Kidney theme of the day";
+  const privacyLine = document.querySelector(".privacy-line");
+  if (privacyLine) {
+    const textNode = [...privacyLine.childNodes].find((node) => node.nodeType === Node.TEXT_NODE);
+    if (textNode) textNode.textContent = ` ${theme.summary}`;
+  }
+}
+
+applyDailyKidneyTheme();
+
 const SECTION_ORDER = ["抽血檢查", "驗尿檢查", "影像檢查", "其他檢查項目"];
 const CATEGORY_ORDER = {
   抽血檢查: [
