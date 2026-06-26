@@ -16,8 +16,6 @@ import {
   WidthType,
 } from "docx";
 import { saveAs } from "file-saver";
-import html2canvas from "html2canvas";
-import { jsPDF } from "jspdf";
 import mapping from "./mapping.json";
 import "./styles.css";
 
@@ -1402,39 +1400,7 @@ function makePdfReport(grouped) {
   return root;
 }
 
-function getPdfRowRanges(report, canvas) {
-  const reportRect = report.getBoundingClientRect();
-  const scale = canvas.width / reportRect.width;
-  return [...report.querySelectorAll("[data-report-row]")]
-    .map((row) => {
-      const rect = row.getBoundingClientRect();
-      return {
-        top: Math.round((rect.top - reportRect.top) * scale),
-        bottom: Math.round((rect.bottom - reportRect.top) * scale),
-      };
-    })
-    .filter((range) => range.bottom > range.top);
-}
-
-function choosePdfSliceHeight(sourceY, pagePixelHeight, canvasHeight, rowRanges) {
-  const naturalEnd = Math.min(sourceY + pagePixelHeight, canvasHeight);
-  if (naturalEnd >= canvasHeight) return canvasHeight - sourceY;
-
-  const crossingRow = rowRanges.find(
-    (range) => range.top < naturalEnd && range.bottom > naturalEnd,
-  );
-  if (!crossingRow) return naturalEnd - sourceY;
-
-  const spaceBeforeRow = crossingRow.top - sourceY;
-  const rowHeight = crossingRow.bottom - crossingRow.top;
-  const enoughContentBeforeRow = spaceBeforeRow >= pagePixelHeight * 0.2;
-  const rowFitsOnPage = rowHeight < pagePixelHeight;
-  if (enoughContentBeforeRow && rowFitsOnPage) return spaceBeforeRow;
-
-  return naturalEnd - sourceY;
-}
-
-function writePrintableFallback(printWindow, report, error) {
+function writePrintableReport(printWindow, report, error = null) {
   if (!printWindow || printWindow.closed) return false;
   const clone = report.cloneNode(true);
   clone.style.position = "static";
@@ -1448,7 +1414,7 @@ function writePrintableFallback(printWindow, report, error) {
     <html lang="zh-Hant">
       <head>
         <meta charset="utf-8">
-        <title>檢查報告整理 PDF 備援</title>
+        <title>檢查報告整理 PDF</title>
         <style>
           @page { size: A4 landscape; margin: 8mm; }
           body { margin: 0; background: #f3f6f7; font-family: "Microsoft JhengHei", Arial, sans-serif; }
@@ -1472,8 +1438,8 @@ function writePrintableFallback(printWindow, report, error) {
       <body>
         <div class="fallback-toolbar">
           <p>
-            自動下載 PDF 失敗，已改用備援列印模式。請按右側按鈕，目的地選「另存為 PDF」。
-            <br><span class="fallback-error">${escapeHtml(error?.message || "PDF 產生失敗")}</span>
+            請按右側按鈕，目的地選「另存為 PDF」。
+            ${error ? `<br><span class="fallback-error">${escapeHtml(error.message)}</span>` : ""}
           </p>
           <button onclick="window.print()">列印 / 另存 PDF</button>
         </div>
@@ -1576,7 +1542,7 @@ previewBody.addEventListener("change", (event) => {
 exportConfirmButton.addEventListener("click", () => {
   exportApproved = true;
   updatePreviewSummary();
-  setStatus("已確認預覽。現在可以選擇下載 PDF 或 Word。", "success");
+  setStatus("已確認預覽。現在可以選擇另存 PDF 或下載 Word。", "success");
 });
 
 function confirmExportIfNeeded(formatName) {
@@ -1609,92 +1575,23 @@ generateButton.addEventListener("click", async () => {
 pdfButton.addEventListener("click", async () => {
   if (!confirmExportIfNeeded("PDF")) return;
   pdfButton.disabled = true;
-  setStatus("正在整理並製作 PDF，請稍候...");
-  let report;
-  let printWindow;
-  let previousOverflow = "";
+  setStatus("正在開啟 PDF 列印頁，請稍候...");
   try {
     const { grouped, count } = getReportData();
-    printWindow = window.open("", "_blank");
-    report = makePdfReport(grouped);
-    document.body.appendChild(report);
-    previousOverflow = document.documentElement.style.overflow;
-    document.documentElement.style.overflow = "hidden";
-    await document.fonts?.ready;
-    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-    try {
-      const canvas = await html2canvas(report, {
-        scale: 1.5,
-        useCORS: true,
-        backgroundColor: "#ffffff",
-        scrollX: 0,
-        scrollY: 0,
-        logging: false,
-        windowWidth: Math.ceil(report.getBoundingClientRect().width),
-        windowHeight: report.scrollHeight,
-      });
-      if (!canvas.width || !canvas.height) throw new Error("報告畫面建立失敗");
-
-      const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "landscape", compress: true });
-      const pageWidthMm = 283;
-      const pageHeightMm = 196;
-      const pagePixelHeight = Math.floor(canvas.width * pageHeightMm / pageWidthMm);
-      const rowRanges = getPdfRowRanges(report, canvas);
-      let sourceY = 0;
-      let pageIndex = 0;
-
-      while (sourceY < canvas.height) {
-        const sliceHeight = choosePdfSliceHeight(
-          sourceY,
-          pagePixelHeight,
-          canvas.height,
-          rowRanges,
-        );
-        const pageCanvas = document.createElement("canvas");
-        pageCanvas.width = canvas.width;
-        pageCanvas.height = pagePixelHeight;
-        const context = pageCanvas.getContext("2d");
-        context.fillStyle = "#ffffff";
-        context.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
-        context.drawImage(
-          canvas,
-          0, sourceY, canvas.width, sliceHeight,
-          0, 0, canvas.width, sliceHeight,
-        );
-        if (pageIndex > 0) pdf.addPage();
-        pdf.addImage(
-          pageCanvas.toDataURL("image/jpeg", 0.96),
-          "JPEG",
-          7, 7, pageWidthMm, pageHeightMm,
-          undefined,
-          "FAST",
-        );
-        sourceY += sliceHeight;
-        pageIndex += 1;
-      }
-      pdf.save("檢查報告整理-病人閱讀版.pdf");
-      printWindow?.close();
-    } finally {
-      document.documentElement.style.overflow = previousOverflow;
-      report.remove();
+    const printWindow = window.open("", "_blank");
+    const report = makePdfReport(grouped);
+    if (!writePrintableReport(printWindow, report)) {
+      throw new Error("瀏覽器封鎖新視窗，請允許彈出式視窗後再試一次");
     }
-    setStatus(`完成：已整理 ${count} 個項目，PDF 已開始下載。`, "success");
+    setStatus(`已整理 ${count} 個項目。請在新視窗按「列印 / 另存 PDF」，目的地選「另存為 PDF」。`, "success");
   } catch (error) {
     console.error(error);
-    if (previousOverflow !== "") document.documentElement.style.overflow = previousOverflow;
-    const fallbackReport = report?.isConnected ? report : document.querySelector(".pdf-report");
-    const fallbackOpened = fallbackReport ? writePrintableFallback(printWindow, fallbackReport, error) : false;
-    fallbackReport?.remove();
-    setStatus(
-      fallbackOpened
-        ? "PDF 自動下載失敗，已開啟備援列印頁。請在新視窗選「另存為 PDF」。"
-        : `無法產生 PDF：${error.message}`,
-      fallbackOpened ? "success" : "error",
-    );
+    setStatus(`無法開啟 PDF 列印頁：${error.message}`, "error");
   } finally {
     updatePreviewSummary();
   }
 });
+
 
 function setStatus(message, type = "") {
   status.textContent = message;
