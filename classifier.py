@@ -3,6 +3,35 @@ from collections import defaultdict
 from config import CATEGORY_ORDER, SECTION_ORDER
 from mapping import lookup_item, normalize_name
 
+URINE_CONTEXT_ALIASES = {
+    "cr": "Urine Creatinine",
+    "crea": "Urine Creatinine",
+    "creat": "Urine Creatinine",
+    "creatinine": "Urine Creatinine",
+}
+
+
+def _specimen_kind(specimen):
+    value = specimen.upper()
+    if "URINE" in value or "尿" in value:
+        return "urine"
+    if any(token in value for token in ("BLOOD", "SERUM", "PLASMA", "血")):
+        return "blood"
+    return "unknown"
+
+
+def _lookup_item_for_specimen(item):
+    normalized = normalize_name(item.raw_name)
+    if _specimen_kind(item.specimen) == "urine" and normalized in URINE_CONTEXT_ALIASES:
+        return lookup_item(URINE_CONTEXT_ALIASES[normalized])
+    return lookup_item(item.raw_name)
+
+
+def _dedupe_key(item, canonical, position):
+    specimen = _specimen_kind(item.specimen)
+    name = canonical or normalize_name(item.raw_name) or f"unknown-{position}"
+    return f"{specimen}:{name}"
+
 
 def _unknown_location(item):
     specimen = item.specimen.upper()
@@ -60,10 +89,8 @@ def classify_items(items):
         ):
             continue
 
-        canonical, mapped = lookup_item(item.raw_name)
-        dedupe_key = canonical or normalize_name(item.raw_name)
-        if not dedupe_key:
-            dedupe_key = f"unknown-{position}"
+        canonical, mapped = _lookup_item_for_specimen(item)
+        dedupe_key = _dedupe_key(item, canonical, position)
         if dedupe_key in seen:
             continue
         seen.add(dedupe_key)

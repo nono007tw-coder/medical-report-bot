@@ -120,8 +120,34 @@ for (const [canonical, item] of Object.entries(mapping)) {
   for (const alias of [canonical, ...item.aliases]) aliasIndex.set(normalize(alias), canonical);
 }
 
+const URINE_CONTEXT_ALIASES = new Map([
+  ["cr", "Urine Creatinine"],
+  ["crea", "Urine Creatinine"],
+  ["creat", "Urine Creatinine"],
+  ["creatinine", "Urine Creatinine"],
+]);
+
 function normalize(value) {
   return [...value.trim().toLowerCase()].filter((char) => /[\p{L}\p{N}]/u.test(char)).join("");
+}
+
+function specimenKind(specimen = "") {
+  const value = specimen.toUpperCase();
+  if (value.includes("URINE") || value.includes("尿")) return "urine";
+  if (/(BLOOD|SERUM|PLASMA|血)/.test(value)) return "blood";
+  return "unknown";
+}
+
+function lookupCanonical(rawName, specimen = "") {
+  const normalized = normalize(rawName);
+  if (specimenKind(specimen) === "urine" && URINE_CONTEXT_ALIASES.has(normalized)) {
+    return URINE_CONTEXT_ALIASES.get(normalized);
+  }
+  return aliasIndex.get(normalized);
+}
+
+function dedupeKeyFor(source, canonical, position) {
+  return `${specimenKind(source.specimen)}:${canonical || normalize(source.rawName) || `unknown-${position}`}`;
 }
 
 function cleanResult(value) {
@@ -467,9 +493,9 @@ function classify(items) {
       !source.reference.trim()
     ) return;
 
-    const canonical = aliasIndex.get(normalize(source.rawName));
+    const canonical = lookupCanonical(source.rawName, source.specimen);
     const mapped = canonical ? mapping[canonical] : null;
-    const dedupeKey = canonical || normalize(source.rawName) || `unknown-${position}`;
+    const dedupeKey = dedupeKeyFor(source, canonical, position);
     if (seen.has(dedupeKey)) return;
     seen.add(dedupeKey);
 
@@ -707,13 +733,13 @@ function buildReviewRows(items) {
   const seen = new Set();
   return items.map((source, position) => {
     const { aligned, fixes, issues } = smartAlignFields(source);
-    const canonical = aliasIndex.get(normalize(aligned.rawName));
+    const canonical = lookupCanonical(aligned.rawName, aligned.specimen);
     const mapped = canonical ? mapping[canonical] : null;
     const [section, category] = mapped
       ? [mapped.section, mapped.category]
       : unknownLocation(aligned);
     const reportGroup = inferReportGroup(section, category, aligned);
-    const dedupeKey = canonical || normalize(aligned.rawName) || `unknown-${position}`;
+    const dedupeKey = dedupeKeyFor(aligned, canonical, position);
     const isDuplicate = seen.has(dedupeKey);
     const hasContent = Boolean(
       aligned.isImage ||

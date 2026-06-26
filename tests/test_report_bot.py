@@ -160,6 +160,22 @@ Novel Tumor Index\t\t0.82\t(  )\tCOI\tNegative: <1.0
         ))
         self.assertEqual(len(grouped["抽血檢查"]["腎功能檢查"]), 1)
 
+    def test_blood_and_urine_creatinine_are_distinguished_by_specimen(self):
+        text = """SPECIMEN: BLOOD
+Cr | 0.72 | mg/dL | M:0.7~1.2; F:0.5-0.9
+SPECIMEN: URINE(SPOT)
+Cr | 98 | mg/dL |
+"""
+        grouped = classify_items(parse_text(text))
+
+        blood_rows = grouped["抽血檢查"]["腎功能檢查"]
+        urine_rows = grouped["驗尿檢查"]["尿蛋白與白蛋白"]
+        self.assertEqual(len(blood_rows), 1)
+        self.assertEqual(len(urine_rows), 1)
+        self.assertEqual((blood_rows[0]["key"], blood_rows[0]["zh"]), ("Creatinine", "肌酸酐"))
+        self.assertEqual((urine_rows[0]["key"], urine_rows[0]["zh"]), ("Urine Creatinine", "尿液肌酸酐"))
+        self.assertEqual((blood_rows[0]["result"], urine_rows[0]["result"]), ("0.72", "98"))
+
     def test_hospital_bilirubin_and_egfr_aliases_are_categorized(self):
         grouped = classify_items(parse_text(
             "SPECIMEN: BLOOD\n"
