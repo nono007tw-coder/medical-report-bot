@@ -853,7 +853,7 @@ function smartAlignFields(source) {
   if (aligned.result && !looksLikeResult(aligned.result) && looksLikeUnit(aligned.result)) {
     issues.push("結果欄疑似放入單位");
   } else if (aligned.result && looksLikeReference(aligned.result)) {
-    issues.push("結果欄疑似放入正常值");
+    issues.push("請確認欄位");
   }
   if (!aligned.result && (aligned.unit || aligned.reference)) issues.push("結果欄空白但後方仍有資料");
   if (aligned.unit && looksLikeReference(aligned.unit) && !looksLikeUnit(aligned.unit)) {
@@ -873,7 +873,6 @@ function assessReviewRow({ mapped, isDuplicate, hasContent, fixes, issues }) {
   const critical = [...issues];
   if (!mapped) notices.push("未識別項目");
   if (!hasContent) critical.push("沒有可輸出的結果");
-  if (isDuplicate) notices.push("重複項目");
   const confidence = critical.length
     ? "needs-review"
     : isDuplicate || !mapped
@@ -932,8 +931,6 @@ function buildReviewRows(items) {
     const warnings = [];
     if (!mapped) warnings.push("未辨識項目");
     if (!hasContent) warnings.push("沒有結果");
-    if (isDuplicate) warnings.push("重複項目");
-
     const assessment = assessReviewRow({
       mapped, isDuplicate, hasContent, fixes, issues,
     });
@@ -1004,6 +1001,10 @@ function abnormalLabel(row) {
   return "正常";
 }
 
+function needsVisibleReviewBadge(row) {
+  return row.confidence === "needs-review";
+}
+
 function renderPreview() {
   previewBody.replaceChildren();
   for (const row of reviewRows.filter((entry) => !isExcludedReportRow(entry))) {
@@ -1064,10 +1065,12 @@ function renderPreview() {
     tr.appendChild(flagCell);
 
     const statusCell = document.createElement("td");
-    const badge = document.createElement("span");
-    badge.className = `preview-status ${row.confidence || (row.warning ? "warning" : "ok")}`;
-    badge.textContent = row.warning ? row.warningText : "可使用";
-    statusCell.appendChild(badge);
+    if (needsVisibleReviewBadge(row)) {
+      const badge = document.createElement("span");
+      badge.className = "preview-status needs-review";
+      badge.textContent = "請確認欄位";
+      statusCell.appendChild(badge);
+    }
     tr.appendChild(statusCell);
     previewBody.appendChild(tr);
   }
@@ -1079,14 +1082,12 @@ function updatePreviewSummary() {
   const visibleRows = reviewRows.filter((row) => !isExcludedReportRow(row));
   const included = visibleRows.filter((row) => row.included).length;
   const abnormal = visibleRows.filter((row) => row.included && isAbnormalRow(row)).length;
-  const corrected = visibleRows.filter((row) => row.confidence === "corrected").length;
   const needsReview = visibleRows.filter((row) => row.confidence === "needs-review").length;
-  const notices = visibleRows.filter((row) => row.confidence === "notice").length;
   const unresolved = reviewRows.filter(
     (row) => !isExcludedReportRow(row) && row.included && row.confidence === "needs-review",
   ).length;
   const filterText = showAbnormalOnly ? "目前只顯示異常值；" : "";
-  previewSummary.textContent = `${filterText}智慧辨識 ${visibleRows.length} 列，目前輸出 ${included} 列；異常 ${abnormal} 列，自動校正 ${corrected} 列，需確認 ${needsReview} 列，提示 ${notices} 列。`;
+  previewSummary.textContent = `${filterText}智慧辨識 ${visibleRows.length} 列，目前輸出 ${included} 列；異常 ${abnormal} 列，需確認 ${needsReview} 列。`;
   const canApprove = included > 0;
   const canDownload = canApprove;
   exportConfirmButton.disabled = !canApprove;
@@ -1229,10 +1230,12 @@ function renderPreviewFourColumns() {
     const referenceStack = document.createElement("div");
     referenceStack.className = "preview-cell-stack";
     referenceStack.append(createPreviewInput(row, "reference"));
-    const badge = document.createElement("span");
-    badge.className = `preview-status ${row.confidence || (row.warning ? "warning" : "ok")}`;
-    badge.textContent = row.warning ? row.warningText : "已對齊";
-    referenceStack.append(badge);
+    if (needsVisibleReviewBadge(row)) {
+      const badge = document.createElement("span");
+      badge.className = "preview-status needs-review";
+      badge.textContent = "請確認欄位";
+      referenceStack.append(badge);
+    }
     referenceCell.append(referenceStack);
 
     tr.append(zhCell, enCell, resultCell, referenceCell);
