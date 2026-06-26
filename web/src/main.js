@@ -845,9 +845,8 @@ function buildReviewRows(items) {
 
 function groupReviewRows(rows) {
   const grouped = {};
-  for (const row of rows.filter((entry) => entry.included)) {
+  for (const row of rows.filter((entry) => entry.included && !isExcludedReportRow(entry))) {
     const category = categoryForGroup(row);
-    if (EXCLUDED_REPORT_CATEGORIES.has(category)) continue;
     grouped[row.reportGroup] ??= {};
     grouped[row.reportGroup][category] ??= [];
     grouped[row.reportGroup][category].push({ ...row, category });
@@ -869,9 +868,15 @@ function groupReviewRows(rows) {
   return ordered;
 }
 
+function isExcludedReportRow(row) {
+  return EXCLUDED_REPORT_CATEGORIES.has(row.category) ||
+    EXCLUDED_REPORT_CATEGORIES.has(categoryForGroup(row)) ||
+    EXCLUDED_REPORT_CATEGORIES.has(PATIENT_CATEGORY_LABELS[row.category]);
+}
+
 function renderPreview() {
   previewBody.replaceChildren();
-  for (const row of reviewRows) {
+  for (const row of reviewRows.filter((entry) => !isExcludedReportRow(entry))) {
     const tr = document.createElement("tr");
     if (row.confidence === "needs-review") tr.className = "warning-row critical-row";
     else if (row.confidence === "notice") tr.className = "warning-row";
@@ -941,14 +946,15 @@ function renderPreview() {
 }
 
 function updatePreviewSummary() {
-  const included = reviewRows.filter((row) => row.included).length;
-  const corrected = reviewRows.filter((row) => row.confidence === "corrected").length;
-  const needsReview = reviewRows.filter((row) => row.confidence === "needs-review").length;
-  const notices = reviewRows.filter((row) => row.confidence === "notice").length;
+  const visibleRows = reviewRows.filter((row) => !isExcludedReportRow(row));
+  const included = visibleRows.filter((row) => row.included).length;
+  const corrected = visibleRows.filter((row) => row.confidence === "corrected").length;
+  const needsReview = visibleRows.filter((row) => row.confidence === "needs-review").length;
+  const notices = visibleRows.filter((row) => row.confidence === "notice").length;
   const unresolved = reviewRows.filter(
-    (row) => row.included && row.confidence === "needs-review",
+    (row) => !isExcludedReportRow(row) && row.included && row.confidence === "needs-review",
   ).length;
-  previewSummary.textContent = `智慧辨識 ${reviewRows.length} 列，目前輸出 ${included} 列；自動校正 ${corrected} 列，需確認 ${needsReview} 列，提示 ${notices} 列。`;
+  previewSummary.textContent = `智慧辨識 ${visibleRows.length} 列，目前輸出 ${included} 列；自動校正 ${corrected} 列，需確認 ${needsReview} 列，提示 ${notices} 列。`;
   const canApprove = included > 0;
   const canDownload = canApprove && exportApproved;
   exportConfirmButton.disabled = !canApprove;
@@ -973,7 +979,7 @@ function createPreviewInput(row, field, className = "") {
 function renderPreviewFourColumns() {
   previewBody.replaceChildren();
 
-  const orderedRows = [...reviewRows].sort((left, right) => {
+  const orderedRows = reviewRows.filter((row) => !isExcludedReportRow(row)).sort((left, right) => {
     const leftGroup = REPORT_GROUP_ORDER.indexOf(left.reportGroup);
     const rightGroup = REPORT_GROUP_ORDER.indexOf(right.reportGroup);
     if (leftGroup !== rightGroup) return leftGroup - rightGroup;
