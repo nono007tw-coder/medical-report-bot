@@ -176,6 +176,36 @@ Cr | 98 | mg/dL |
         self.assertEqual((urine_rows[0]["key"], urine_rows[0]["zh"]), ("Urine Creatinine", "尿液肌酸酐"))
         self.assertEqual((blood_rows[0]["result"], urine_rows[0]["result"]), ("0.72", "98"))
 
+    def test_urine_ratio_report_suppresses_component_noise(self):
+        text = """Medical order: Crea,Protein
+GLU | | |
+Protein | 87.90 | mg/dL | N/A
+Crea | 54.60 | mg/dL | N/A
+Pro/Cr | 1.610 | | <0.2 | H
+SPECIMEN: URINE(SPOT)
+Medical order: Microalbumin, spot urine
+Result | 75.67 | mg/dL | N/A
+Total | | |
+Malb/Ucre | 1.386 | | <0.03:normal;
+0.03~0.3 | microalbuminurmia; | |
+>0.3 | overt | proteinuria |
+"""
+        grouped = classify_items(parse_text(text))
+        rows = [
+            row
+            for categories in grouped.values()
+            for category_rows in categories.values()
+            for row in category_rows
+        ]
+
+        self.assertEqual([row["key"] for row in rows], ["ACR", "PCR"])
+        acr = next(row for row in rows if row["key"] == "ACR")
+        pcr = next(row for row in rows if row["key"] == "PCR")
+        self.assertEqual((acr["zh"], acr["result"], acr["reference"]), ("尿白蛋白肌酸酐比", "1.386", "<0.03:normal;"))
+        self.assertEqual((pcr["zh"], pcr["result"], pcr["reference"], pcr["flag"]), ("尿蛋白肌酸酐比", "1.610", "<0.2", "H"))
+        self.assertNotIn("Urine Protein", {row["key"] for row in rows})
+        self.assertNotIn("Urine Creatinine", {row["key"] for row in rows})
+
     def test_hospital_bilirubin_and_egfr_aliases_are_categorized(self):
         grouped = classify_items(parse_text(
             "SPECIMEN: BLOOD\n"

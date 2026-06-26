@@ -127,6 +127,45 @@ const URINE_CONTEXT_ALIASES = new Map([
   ["creatinine", "Urine Creatinine"],
 ]);
 
+const URINE_RATIO_NAMES = new Set([
+  "acr",
+  "acratio",
+  "malbucre",
+  "microalbumincreatinine",
+  "microalbuminucre",
+  "pcr",
+  "pcratio",
+  "procr",
+  "proteincr",
+  "proteincreatinine",
+  "upcr",
+]);
+
+const URINE_COMPONENT_NAMES = new Set([
+  "crea",
+  "creat",
+  "creatinine",
+  "cr",
+  "glu",
+  "glucose",
+  "medicalorder",
+  "protein",
+  "result",
+  "total",
+  "結果",
+  "總量",
+]);
+
+const URINE_COMPONENT_CANONICALS = new Set([
+  "Urine Albumin",
+  "Urine Creatinine",
+  "Urine Glucose",
+  "Urine Protein",
+  "Urine Protein Dipstick",
+]);
+
+const REFERENCE_FRAGMENT_PATTERN = /^(?:[<>]=?)?\d+(?:\.\d+)?(?:\s*[~-]\s*\d+(?:\.\d+)?)?$/;
+
 function normalize(value) {
   return [...value.trim().toLowerCase()].filter((char) => /[\p{L}\p{N}]/u.test(char)).join("");
 }
@@ -148,6 +187,19 @@ function lookupCanonical(rawName, specimen = "") {
 
 function dedupeKeyFor(source, canonical, position) {
   return `${specimenKind(source.specimen)}:${canonical || normalize(source.rawName) || `unknown-${position}`}`;
+}
+
+function hasUrineRatio(items) {
+  return items.some((item) => URINE_RATIO_NAMES.has(normalize(item.rawName)));
+}
+
+function shouldSkipUrineComponent(source, canonical, urineRatioPresent) {
+  const specimen = specimenKind(source.specimen);
+  const normalized = normalize(source.rawName);
+  if (!urineRatioPresent || !["urine", "unknown"].includes(specimen)) return false;
+  if (URINE_COMPONENT_CANONICALS.has(canonical) && specimen === "urine") return true;
+  if (URINE_COMPONENT_NAMES.has(normalized)) return true;
+  return REFERENCE_FRAGMENT_PATTERN.test(source.rawName.trim());
 }
 
 function cleanResult(value) {
@@ -484,6 +536,7 @@ function item(rawName, result, unit, reference, flag, specimen, rawText) {
 function classify(items) {
   const grouped = {};
   const seen = new Set();
+  const urineRatioPresent = hasUrineRatio(items);
 
   items.forEach((source, position) => {
     if (
@@ -495,6 +548,7 @@ function classify(items) {
 
     const canonical = lookupCanonical(source.rawName, source.specimen);
     const mapped = canonical ? mapping[canonical] : null;
+    if (shouldSkipUrineComponent(source, canonical, urineRatioPresent)) return;
     const dedupeKey = dedupeKeyFor(source, canonical, position);
     if (seen.has(dedupeKey)) return;
     seen.add(dedupeKey);
@@ -731,10 +785,12 @@ function refreshRowAssessment(row) {
 
 function buildReviewRows(items) {
   const seen = new Set();
+  const urineRatioPresent = hasUrineRatio(items);
   return items.map((source, position) => {
     const { aligned, fixes, issues } = smartAlignFields(source);
     const canonical = lookupCanonical(aligned.rawName, aligned.specimen);
     const mapped = canonical ? mapping[canonical] : null;
+    if (shouldSkipUrineComponent(aligned, canonical, urineRatioPresent)) return null;
     const [section, category] = mapped
       ? [mapped.section, mapped.category]
       : unknownLocation(aligned);

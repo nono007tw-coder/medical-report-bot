@@ -1113,7 +1113,11 @@
     "aliases": [
       "ACRatio",
       "ACR",
-      "UACR"
+      "UACR",
+      "Malb/Ucre",
+      "MAlb/Ucre",
+      "Microalbumin/Creatinine",
+      "Microalbumin/Ucre"
     ],
     "zh": "尿白蛋白肌酸酐比",
     "en": "Albumin-to-Creatinine Ratio, ACR",
@@ -1125,7 +1129,10 @@
     "aliases": [
       "PCRatio",
       "PCR",
-      "UPCR"
+      "UPCR",
+      "Pro/Cr",
+      "Protein/Cr",
+      "Protein/Creatinine"
     ],
     "zh": "尿蛋白肌酸酐比",
     "en": "Protein-to-Creatinine Ratio, PCR",

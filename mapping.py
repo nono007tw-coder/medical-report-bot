@@ -117,8 +117,8 @@ LAB_MAPPING = {
     # Urine
     "Urine Protein": _item(["Urine Protein", "Protein(U)", "Urine Total Protein"], "尿蛋白", "Urine Protein", "驗尿檢查", "尿蛋白與白蛋白", 2301),
     "Urine Creatinine": _item(["Urine Creatinine", "Creatinine(U)", "U-Cr"], "尿液肌酸酐", "Urine Creatinine, U-Cr", "驗尿檢查", "尿蛋白與白蛋白", 2302),
-    "ACR": _item(["ACRatio", "ACR", "UACR"], "尿白蛋白肌酸酐比", "Albumin-to-Creatinine Ratio, ACR", "驗尿檢查", "尿蛋白與白蛋白", 2303),
-    "PCR": _item(["PCRatio", "PCR", "UPCR"], "尿蛋白肌酸酐比", "Protein-to-Creatinine Ratio, PCR", "驗尿檢查", "尿蛋白與白蛋白", 2304),
+    "ACR": _item(["ACRatio", "ACR", "UACR", "Malb/Ucre", "MAlb/Ucre", "Microalbumin/Creatinine", "Microalbumin/Ucre"], "尿白蛋白肌酸酐比", "Albumin-to-Creatinine Ratio, ACR", "驗尿檢查", "尿蛋白與白蛋白", 2303),
+    "PCR": _item(["PCRatio", "PCR", "UPCR", "Pro/Cr", "Protein/Cr", "Protein/Creatinine"], "尿蛋白肌酸酐比", "Protein-to-Creatinine Ratio, PCR", "驗尿檢查", "尿蛋白與白蛋白", 2304),
     "Urine Albumin": _item(["Urine Albumin", "Microalbumin", "U-Albumin"], "尿液白蛋白", "Urine Albumin", "驗尿檢查", "尿蛋白與白蛋白", 2305),
     "Urine pH": _item(["pH(U)", "Urine pH", "pH"], "尿液酸鹼值", "Urine pH", "驗尿檢查", "尿液一般檢查", 2201),
     "Urine SG": _item(["Specific Gravity", "S.G.", "SG"], "尿液比重", "Urine Specific Gravity, SG", "驗尿檢查", "尿液一般檢查", 2202),

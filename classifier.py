@@ -1,4 +1,5 @@
 from collections import defaultdict
+import re
 
 from config import CATEGORY_ORDER, SECTION_ORDER
 from mapping import lookup_item, normalize_name
@@ -9,6 +10,45 @@ URINE_CONTEXT_ALIASES = {
     "creat": "Urine Creatinine",
     "creatinine": "Urine Creatinine",
 }
+
+URINE_RATIO_NAMES = {
+    "acr",
+    "acratio",
+    "malbucre",
+    "microalbumincreatinine",
+    "microalbuminucre",
+    "pcr",
+    "pcratio",
+    "procr",
+    "proteincr",
+    "proteincreatinine",
+    "upcr",
+}
+
+URINE_COMPONENT_NAMES = {
+    "crea",
+    "creat",
+    "creatinine",
+    "cr",
+    "glu",
+    "glucose",
+    "medicalorder",
+    "protein",
+    "result",
+    "total",
+    "總量",
+    "結果",
+}
+
+URINE_COMPONENT_CANONICALS = {
+    "Urine Albumin",
+    "Urine Creatinine",
+    "Urine Glucose",
+    "Urine Protein",
+    "Urine Protein Dipstick",
+}
+
+REFERENCE_FRAGMENT_RE = re.compile(r"^(?:[<>]=?)?\d+(?:\.\d+)?(?:\s*[~-]\s*\d+(?:\.\d+)?)?$")
 
 
 def _specimen_kind(specimen):
@@ -31,6 +71,18 @@ def _dedupe_key(item, canonical, position):
     specimen = _specimen_kind(item.specimen)
     name = canonical or normalize_name(item.raw_name) or f"unknown-{position}"
     return f"{specimen}:{name}"
+
+
+def _should_skip_urine_component(item, canonical, has_urine_ratio):
+    normalized = normalize_name(item.raw_name)
+    specimen = _specimen_kind(item.specimen)
+    if has_urine_ratio and canonical in URINE_COMPONENT_CANONICALS and specimen == "urine":
+        return True
+    if has_urine_ratio and normalized in URINE_COMPONENT_NAMES and specimen in {"urine", "unknown"}:
+        return True
+    if has_urine_ratio and specimen in {"urine", "unknown"} and REFERENCE_FRAGMENT_RE.match(item.raw_name.strip()):
+        return True
+    return False
 
 
 def _unknown_location(item):
@@ -79,6 +131,7 @@ def _unknown_blood_category(raw_name):
 def classify_items(items):
     grouped = defaultdict(lambda: defaultdict(list))
     seen = set()
+    has_urine_ratio = any(normalize_name(item.raw_name) in URINE_RATIO_NAMES for item in items)
 
     for position, item in enumerate(items):
         if (
@@ -90,6 +143,8 @@ def classify_items(items):
             continue
 
         canonical, mapped = _lookup_item_for_specimen(item)
+        if _should_skip_urine_component(item, canonical, has_urine_ratio):
+            continue
         dedupe_key = _dedupe_key(item, canonical, position)
         if dedupe_key in seen:
             continue
