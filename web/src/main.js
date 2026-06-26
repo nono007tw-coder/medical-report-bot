@@ -115,7 +115,12 @@ function applyDailyKidneyTheme() {
 
   document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme.navy);
   const navBadge = document.querySelector(".nav-badge");
-  if (navBadge?.lastChild) navBadge.lastChild.textContent = ` ${theme.title}`;
+  if (navBadge) {
+    navBadge.replaceChildren();
+    const dot = document.createElement("span");
+    dot.className = "status-dot";
+    navBadge.append(dot, ` ${theme.title}`);
+  }
   const eyebrow = document.querySelector(".eyebrow");
   if (eyebrow) eyebrow.lastChild.textContent = ` ${theme.label}`;
   const privacyLabel = document.querySelector(".privacy-label");
