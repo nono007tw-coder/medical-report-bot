@@ -103,6 +103,7 @@ const DAILY_KIDNEY_THEMES = [
 
 function applyDailyKidneyTheme() {
   const theme = DAILY_KIDNEY_THEMES[new Date().getDay()];
+  const weekdayOnly = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"][new Date().getDay()];
   const root = document.documentElement;
   document.body.dataset.kidneyTheme = String(new Date().getDay());
   document.body.dataset.kidneyThemeName = theme.title;
@@ -119,7 +120,7 @@ function applyDailyKidneyTheme() {
     navBadge.replaceChildren();
     const dot = document.createElement("span");
     dot.className = "status-dot";
-    navBadge.append(dot, ` ${theme.title}`);
+    navBadge.append(dot, ` ${weekdayOnly}`);
   }
   const eyebrow = document.querySelector(".eyebrow");
   if (eyebrow) eyebrow.lastChild.textContent = ` ${theme.label}`;
