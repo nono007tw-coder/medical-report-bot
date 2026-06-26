@@ -956,7 +956,7 @@ function updatePreviewSummary() {
   ).length;
   previewSummary.textContent = `智慧辨識 ${visibleRows.length} 列，目前輸出 ${included} 列；自動校正 ${corrected} 列，需確認 ${needsReview} 列，提示 ${notices} 列。`;
   const canApprove = included > 0;
-  const canDownload = canApprove && exportApproved;
+  const canDownload = canApprove;
   exportConfirmButton.disabled = !canApprove;
   exportConfirmButton.textContent = exportApproved
     ? "已確認預覽，可輸出 PDF / Word"
@@ -1319,9 +1319,6 @@ function getReportData() {
   if (!reviewedSource || reviewedSource !== text) {
     throw new Error("內容尚未預覽，請先按「整理並預覽」");
   }
-  if (!exportApproved) {
-    throw new Error("請先確認預覽，再輸出 PDF 或 Word");
-  }
   const grouped = groupReviewRows(reviewRows);
   const count = Object.values(grouped).reduce(
     (total, categories) => total + Object.values(categories).reduce((sum, rows) => sum + rows.length, 0),
@@ -1411,7 +1408,18 @@ exportConfirmButton.addEventListener("click", () => {
   setStatus("已確認預覽。現在可以選擇下載 PDF 或 Word。", "success");
 });
 
+function confirmExportIfNeeded(formatName) {
+  if (exportApproved) return true;
+  const confirmed = window.confirm(`預覽已建立。是否確認輸出 ${formatName}？`);
+  if (confirmed) {
+    exportApproved = true;
+    updatePreviewSummary();
+  }
+  return confirmed;
+}
+
 generateButton.addEventListener("click", async () => {
+  if (!confirmExportIfNeeded("Word")) return;
   generateButton.disabled = true;
   setStatus("正在整理並製作 Word，請稍候...");
   try {
@@ -1428,6 +1436,7 @@ generateButton.addEventListener("click", async () => {
 });
 
 pdfButton.addEventListener("click", async () => {
+  if (!confirmExportIfNeeded("PDF")) return;
   pdfButton.disabled = true;
   setStatus("正在整理並製作 PDF，請稍候...");
   try {
