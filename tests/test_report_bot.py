@@ -125,13 +125,11 @@ Creat\tH\t6.34\tmg/dL\tM:0.7~1.2; F:0.5-0.9 mg/dL
         self.assertEqual(items[0].raw_name, "Na")
         self.assertEqual(items[1].raw_name, "K")
 
-    def test_unknown_items_are_preserved(self):
+    def test_unknown_urine_items_are_suppressed(self):
         grouped = classify_items(parse_text(
             "SPECIMEN: URINE\nUnknown Crystal | Few | | N/A"
         ))
-        rows = grouped["驗尿檢查"]["其他尿液檢查"]
-        self.assertEqual(rows[0]["zh"], "Unknown Crystal")
-        self.assertEqual(rows[0]["en"], "Unknown Crystal")
+        self.assertNotIn("驗尿檢查", grouped)
 
     def test_vghtpe_unmapped_assays_keep_original_fields_and_category(self):
         text = """檢體　　：
@@ -150,8 +148,7 @@ Novel Tumor Index\t\t0.82\t(  )\tCOI\tNegative: <1.0
         )
         endocrine = grouped["抽血檢查"]["內分泌與荷爾蒙檢查"][0]
         self.assertEqual((endocrine["result"], endocrine["reference"]), ("2.31", "1.10~4.40"))
-        fallback = grouped["抽血檢查"]["一般生化檢查"][0]
-        self.assertEqual((fallback["result"], fallback["unit"]), ("0.82", "COI"))
+        self.assertNotIn("一般生化檢查", grouped["抽血檢查"])
 
     def test_duplicate_aliases_are_removed(self):
         grouped = classify_items(parse_text(

@@ -50,6 +50,7 @@ const REPORT_CATEGORY_ORDER = {
   "3. 尿液檢查": CATEGORY_ORDER.驗尿檢查,
   "4. 影像檢查": CATEGORY_ORDER.影像檢查,
 };
+const EXCLUDED_REPORT_CATEGORIES = new Set(["一般生化檢查", "其他尿液檢查"]);
 const PATIENT_CATEGORY_LABELS = {
   血液常規檢查: "血球與貧血",
   凝血功能檢查: "凝血功能",
@@ -796,6 +797,8 @@ function buildReviewRows(items) {
       ? [mapped.section, mapped.category]
       : unknownLocation(aligned);
     const reportGroup = inferReportGroup(section, category, aligned);
+    const outputCategory = categoryForGroup({ reportGroup, category });
+    if (EXCLUDED_REPORT_CATEGORIES.has(outputCategory)) return null;
     const dedupeKey = dedupeKeyFor(aligned, canonical, position);
     const isDuplicate = seen.has(dedupeKey);
     const hasContent = Boolean(
@@ -844,6 +847,7 @@ function groupReviewRows(rows) {
   const grouped = {};
   for (const row of rows.filter((entry) => entry.included)) {
     const category = categoryForGroup(row);
+    if (EXCLUDED_REPORT_CATEGORIES.has(category)) continue;
     grouped[row.reportGroup] ??= {};
     grouped[row.reportGroup][category] ??= [];
     grouped[row.reportGroup][category].push({ ...row, category });
@@ -945,7 +949,7 @@ function updatePreviewSummary() {
     (row) => row.included && row.confidence === "needs-review",
   ).length;
   previewSummary.textContent = `智慧辨識 ${reviewRows.length} 列，目前輸出 ${included} 列；自動校正 ${corrected} 列，需確認 ${needsReview} 列，提示 ${notices} 列。`;
-  const canApprove = included > 0 && unresolved === 0;
+  const canApprove = included > 0;
   const canDownload = canApprove && exportApproved;
   exportConfirmButton.disabled = !canApprove;
   exportConfirmButton.textContent = exportApproved
@@ -1311,12 +1315,6 @@ function getReportData() {
   }
   if (!exportApproved) {
     throw new Error("請先確認預覽，再輸出 PDF 或 Word");
-  }
-  const unresolved = reviewRows.filter(
-    (row) => row.included && row.confidence === "needs-review",
-  );
-  if (unresolved.length) {
-    throw new Error(`尚有 ${unresolved.length} 個欄位需要確認，請先修正黃色項目`);
   }
   const grouped = groupReviewRows(reviewRows);
   const count = Object.values(grouped).reduce(

@@ -49,6 +49,7 @@ URINE_COMPONENT_CANONICALS = {
 }
 
 REFERENCE_FRAGMENT_RE = re.compile(r"^(?:[<>]=?)?\d+(?:\.\d+)?(?:\s*[~-]\s*\d+(?:\.\d+)?)?$")
+EXCLUDED_REPORT_CATEGORIES = {"一般生化檢查", "其他尿液檢查"}
 
 
 def _specimen_kind(specimen):
@@ -151,6 +152,8 @@ def classify_items(items):
         seen.add(dedupe_key)
 
         if mapped:
+            if mapped["category"] in EXCLUDED_REPORT_CATEGORIES:
+                continue
             row = {
                 "key": canonical,
                 "zh": mapped["zh"],
@@ -166,6 +169,8 @@ def classify_items(items):
             grouped[mapped["section"]][mapped["category"]].append(row)
         else:
             section, category = _unknown_location(item)
+            if category in EXCLUDED_REPORT_CATEGORIES:
+                continue
             row = {
                 "key": item.raw_name,
                 "zh": item.raw_name,
