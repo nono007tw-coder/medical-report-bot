@@ -1455,6 +1455,56 @@ function choosePdfSliceHeight(sourceY, pagePixelHeight, canvasHeight, rowRanges)
   return naturalEnd - sourceY;
 }
 
+function writePrintableFallback(printWindow, report, error) {
+  if (!printWindow || printWindow.closed) return false;
+  const clone = report.cloneNode(true);
+  clone.style.position = "static";
+  clone.style.width = "auto";
+  clone.style.minHeight = "auto";
+  clone.style.pointerEvents = "auto";
+  clone.style.zIndex = "auto";
+  clone.style.padding = "10mm";
+  printWindow.document.open();
+  printWindow.document.write(`<!doctype html>
+    <html lang="zh-Hant">
+      <head>
+        <meta charset="utf-8">
+        <title>檢查報告整理 PDF 備援</title>
+        <style>
+          @page { size: A4 landscape; margin: 8mm; }
+          body { margin: 0; background: #f3f6f7; font-family: "Microsoft JhengHei", Arial, sans-serif; }
+          .fallback-toolbar {
+            position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+            padding: 12px 16px; color: #17304c; background: #ffffff; border-bottom: 1px solid #d8e3e8;
+            box-shadow: 0 6px 20px rgba(20,47,61,.08);
+          }
+          .fallback-toolbar p { margin: 0; font-size: 13px; line-height: 1.5; }
+          .fallback-toolbar button {
+            padding: 10px 16px; color: white; background: #158c80; border: 0; border-radius: 10px;
+            cursor: pointer; font-weight: 700;
+          }
+          .fallback-error { color: #a43c45; font-size: 11px; }
+          @media print {
+            body { background: white; }
+            .fallback-toolbar { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="fallback-toolbar">
+          <p>
+            自動下載 PDF 失敗，已改用備援列印模式。請按右側按鈕，目的地選「另存為 PDF」。
+            <br><span class="fallback-error">${escapeHtml(error?.message || "PDF 產生失敗")}</span>
+          </p>
+          <button onclick="window.print()">列印 / 另存 PDF</button>
+        </div>
+        ${clone.outerHTML}
+      </body>
+    </html>`);
+  printWindow.document.close();
+  return true;
+}
+
 function getReportData() {
   const text = sourceText.value.trim();
   if (!text) throw new Error("請先選擇文字檔或貼上內容");
@@ -1581,17 +1631,21 @@ pdfButton.addEventListener("click", async () => {
   if (!confirmExportIfNeeded("PDF")) return;
   pdfButton.disabled = true;
   setStatus("正在整理並製作 PDF，請稍候...");
+  let report;
+  let printWindow;
+  let previousOverflow = "";
   try {
     const { grouped, count } = getReportData();
-    const report = makePdfReport(grouped);
+    printWindow = window.open("", "_blank");
+    report = makePdfReport(grouped);
     document.body.appendChild(report);
-    const previousOverflow = document.documentElement.style.overflow;
+    previousOverflow = document.documentElement.style.overflow;
     document.documentElement.style.overflow = "hidden";
     await document.fonts?.ready;
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     try {
       const canvas = await html2canvas(report, {
-        scale: 2,
+        scale: 1.5,
         useCORS: true,
         backgroundColor: "#ffffff",
         scrollX: 0,
@@ -1640,6 +1694,7 @@ pdfButton.addEventListener("click", async () => {
         pageIndex += 1;
       }
       pdf.save("檢查報告整理-病人閱讀版.pdf");
+      printWindow?.close();
     } finally {
       document.documentElement.style.overflow = previousOverflow;
       report.remove();
@@ -1647,8 +1702,16 @@ pdfButton.addEventListener("click", async () => {
     setStatus(`完成：已整理 ${count} 個項目，PDF 已開始下載。`, "success");
   } catch (error) {
     console.error(error);
-    document.querySelector(".pdf-report")?.remove();
-    setStatus(`無法產生 PDF：${error.message}`, "error");
+    if (previousOverflow !== "") document.documentElement.style.overflow = previousOverflow;
+    const fallbackReport = report?.isConnected ? report : document.querySelector(".pdf-report");
+    const fallbackOpened = fallbackReport ? writePrintableFallback(printWindow, fallbackReport, error) : false;
+    fallbackReport?.remove();
+    setStatus(
+      fallbackOpened
+        ? "PDF 自動下載失敗，已開啟備援列印頁。請在新視窗選「另存為 PDF」。"
+        : `無法產生 PDF：${error.message}`,
+      fallbackOpened ? "success" : "error",
+    );
   } finally {
     updatePreviewSummary();
   }
