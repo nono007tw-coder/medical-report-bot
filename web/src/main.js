@@ -241,10 +241,34 @@ for (const [canonical, item] of Object.entries(mapping)) {
 }
 
 const URINE_CONTEXT_ALIASES = new Map([
+  ["alb", "Urine Albumin"],
+  ["albumin", "Urine Albumin"],
+  ["glu", "Urine Glucose"],
+  ["glucose", "Urine Glucose"],
+  ["malb", "Urine Albumin"],
+  ["microalbumin", "Urine Albumin"],
+  ["pro", "Urine Protein"],
+  ["protein", "Urine Protein"],
   ["cr", "Urine Creatinine"],
   ["crea", "Urine Creatinine"],
   ["creat", "Urine Creatinine"],
   ["creatinine", "Urine Creatinine"],
+]);
+
+const BLOOD_CONTEXT_ALIASES = new Map([
+  ["alb", "Albumin"],
+  ["albumin", "Albumin"],
+  ["cr", "Creatinine"],
+  ["crea", "Creatinine"],
+  ["creat", "Creatinine"],
+  ["creatinine", "Creatinine"],
+  ["glu", "Glucose"],
+  ["glucose", "Glucose"],
+  ["protein", "Total Protein"],
+  ["totalprotein", "Total Protein"],
+  ["tp", "Total Protein"],
+  ["tpro", "Total Protein"],
+  ["tprot", "Total Protein"],
 ]);
 
 const URINE_RATIO_NAMES = new Set([
@@ -299,8 +323,12 @@ function specimenKind(specimen = "") {
 
 function lookupCanonical(rawName, specimen = "") {
   const normalized = normalize(rawName);
-  if (specimenKind(specimen) === "urine" && URINE_CONTEXT_ALIASES.has(normalized)) {
+  const kind = specimenKind(specimen);
+  if (kind === "urine" && URINE_CONTEXT_ALIASES.has(normalized)) {
     return URINE_CONTEXT_ALIASES.get(normalized);
+  }
+  if (kind === "blood" && BLOOD_CONTEXT_ALIASES.has(normalized)) {
+    return BLOOD_CONTEXT_ALIASES.get(normalized);
   }
   return aliasIndex.get(normalized);
 }

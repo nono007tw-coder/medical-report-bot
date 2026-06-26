@@ -5,10 +5,34 @@ from config import CATEGORY_ORDER, SECTION_ORDER
 from mapping import lookup_item, normalize_name
 
 URINE_CONTEXT_ALIASES = {
+    "alb": "Urine Albumin",
+    "albumin": "Urine Albumin",
+    "glu": "Urine Glucose",
+    "glucose": "Urine Glucose",
+    "malb": "Urine Albumin",
+    "microalbumin": "Urine Albumin",
+    "pro": "Urine Protein",
+    "protein": "Urine Protein",
     "cr": "Urine Creatinine",
     "crea": "Urine Creatinine",
     "creat": "Urine Creatinine",
     "creatinine": "Urine Creatinine",
+}
+
+BLOOD_CONTEXT_ALIASES = {
+    "alb": "Albumin",
+    "albumin": "Albumin",
+    "cr": "Creatinine",
+    "crea": "Creatinine",
+    "creat": "Creatinine",
+    "creatinine": "Creatinine",
+    "glu": "Glucose",
+    "glucose": "Glucose",
+    "protein": "Total Protein",
+    "totalprotein": "Total Protein",
+    "tp": "Total Protein",
+    "tpro": "Total Protein",
+    "tprot": "Total Protein",
 }
 
 URINE_RATIO_NAMES = {
@@ -63,8 +87,11 @@ def _specimen_kind(specimen):
 
 def _lookup_item_for_specimen(item):
     normalized = normalize_name(item.raw_name)
-    if _specimen_kind(item.specimen) == "urine" and normalized in URINE_CONTEXT_ALIASES:
+    specimen = _specimen_kind(item.specimen)
+    if specimen == "urine" and normalized in URINE_CONTEXT_ALIASES:
         return lookup_item(URINE_CONTEXT_ALIASES[normalized])
+    if specimen == "blood" and normalized in BLOOD_CONTEXT_ALIASES:
+        return lookup_item(BLOOD_CONTEXT_ALIASES[normalized])
     return lookup_item(item.raw_name)
 
 

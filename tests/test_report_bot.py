@@ -202,6 +202,51 @@ Cr | 98 | mg/dL |
         self.assertEqual([row["key"] for row in rows], ["Creatinine", "Urine Creatinine"])
         self.assertEqual([row["result"] for row in rows], ["0.72", "98"])
 
+    def test_same_named_blood_and_urine_items_keep_separate_context(self):
+        text = """SPECIMEN: BLOOD
+Protein | 7.1 | g/dL | 6.0-8.0
+Albumin | 4.2 | g/dL | 3.5-5.0
+Glucose | 98 | mg/dL | 70-100
+Cr | 0.80 | mg/dL | 0.5-1.1
+SPECIMEN: URINE(SPOT)
+Protein | 87.90 | mg/dL | N/A
+Albumin | 75.67 | mg/dL | N/A
+Glucose | Negative | | Negative
+Cr | 54.60 | mg/dL | N/A
+"""
+        grouped = classify_items(parse_text(text))
+        rows = [
+            row
+            for categories in grouped.values()
+            for category_rows in categories.values()
+            for row in category_rows
+        ]
+
+        self.assertEqual(
+            [row["key"] for row in rows],
+            [
+                "Albumin",
+                "Total Protein",
+                "Creatinine",
+                "Glucose",
+                "Urine Protein",
+                "Urine Creatinine",
+                "Urine Albumin",
+            ],
+        )
+        self.assertEqual(
+            {row["key"]: row["result"] for row in rows},
+            {
+                "Albumin": "4.2",
+                "Total Protein": "7.1",
+                "Creatinine": "0.80",
+                "Glucose": "98",
+                "Urine Protein": "87.90",
+                "Urine Creatinine": "54.60",
+                "Urine Albumin": "75.67",
+            },
+        )
+
     def test_urine_ratio_report_suppresses_component_noise(self):
         text = """Medical order: Crea,Protein
 GLU | | |
