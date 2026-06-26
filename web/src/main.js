@@ -768,6 +768,7 @@ function categoryForGroup(row) {
 let reviewRows = [];
 let reviewedSource = "";
 let previewTimer;
+let showAbnormalOnly = false;
 let exportApproved = false;
 
 const UNIT_PATTERN = /^(?:%|‰|\/?(?:u|µ|μ)?l|10\^\d+\/(?:u|µ|μ)?l|(?:f|p|n|µ|μ|m)?g\/(?:d|m)?l|(?:m|µ|μ|n)?mol\/l|m?eq\/l|(?:m|µ|μ|n)?(?:iu|u)\/ml|(?:m|µ|μ|n)?(?:iu|u)\/l|au\/ml|bau\/ml|cu|coi|index|s\/co|copies?\/ml|copies?\/g|mg\/g|g\/g|ml\/min(?:\/1\.73m\^?2)?|fl|pg|sec|seconds?|min|hours?|ratio)$/i;
@@ -993,6 +994,16 @@ function isExcludedReportRow(row) {
     EXCLUDED_REPORT_CATEGORIES.has(PATIENT_CATEGORY_LABELS[row.category]);
 }
 
+function isAbnormalRow(row) {
+  return ["H", "L"].includes((row.flag || "").toUpperCase());
+}
+
+function abnormalLabel(row) {
+  if ((row.flag || "").toUpperCase() === "H") return "偏高";
+  if ((row.flag || "").toUpperCase() === "L") return "偏低";
+  return "正常";
+}
+
 function renderPreview() {
   previewBody.replaceChildren();
   for (const row of reviewRows.filter((entry) => !isExcludedReportRow(entry))) {
@@ -1067,13 +1078,15 @@ function renderPreview() {
 function updatePreviewSummary() {
   const visibleRows = reviewRows.filter((row) => !isExcludedReportRow(row));
   const included = visibleRows.filter((row) => row.included).length;
+  const abnormal = visibleRows.filter((row) => row.included && isAbnormalRow(row)).length;
   const corrected = visibleRows.filter((row) => row.confidence === "corrected").length;
   const needsReview = visibleRows.filter((row) => row.confidence === "needs-review").length;
   const notices = visibleRows.filter((row) => row.confidence === "notice").length;
   const unresolved = reviewRows.filter(
     (row) => !isExcludedReportRow(row) && row.included && row.confidence === "needs-review",
   ).length;
-  previewSummary.textContent = `智慧辨識 ${visibleRows.length} 列，目前輸出 ${included} 列；自動校正 ${corrected} 列，需確認 ${needsReview} 列，提示 ${notices} 列。`;
+  const filterText = showAbnormalOnly ? "目前只顯示異常值；" : "";
+  previewSummary.textContent = `${filterText}智慧辨識 ${visibleRows.length} 列，目前輸出 ${included} 列；異常 ${abnormal} 列，自動校正 ${corrected} 列，需確認 ${needsReview} 列，提示 ${notices} 列。`;
   const canApprove = included > 0;
   const canDownload = canApprove;
   exportConfirmButton.disabled = !canApprove;
@@ -1082,6 +1095,11 @@ function updatePreviewSummary() {
     : "確認預覽，可以輸出 PDF / Word";
   generateButton.disabled = !canDownload;
   pdfButton.disabled = !canDownload;
+  if (abnormalOnlyButton) {
+    abnormalOnlyButton.disabled = visibleRows.length === 0;
+    abnormalOnlyButton.setAttribute("aria-pressed", showAbnormalOnly ? "true" : "false");
+    abnormalOnlyButton.textContent = showAbnormalOnly ? "顯示全部項目" : "只顯示異常值";
+  }
 }
 
 function createPreviewInput(row, field, className = "") {
@@ -1098,7 +1116,9 @@ function createPreviewInput(row, field, className = "") {
 function renderPreviewFourColumns() {
   previewBody.replaceChildren();
 
-  const orderedRows = reviewRows.filter((row) => !isExcludedReportRow(row)).sort((left, right) => {
+  const orderedRows = reviewRows.filter((row) =>
+    !isExcludedReportRow(row) && (!showAbnormalOnly || isAbnormalRow(row))
+  ).sort((left, right) => {
     const leftGroup = REPORT_GROUP_ORDER.indexOf(left.reportGroup);
     const rightGroup = REPORT_GROUP_ORDER.indexOf(right.reportGroup);
     if (leftGroup !== rightGroup) return leftGroup - rightGroup;
@@ -1109,6 +1129,20 @@ function renderPreviewFourColumns() {
     if (leftCategory !== rightCategory) return leftCategory - rightCategory;
     return (left.order ?? 0) - (right.order ?? 0) || left.id - right.id;
   });
+
+  if (!orderedRows.length) {
+    const emptyRow = document.createElement("tr");
+    emptyRow.className = "preview-empty-row";
+    const emptyCell = document.createElement("td");
+    emptyCell.colSpan = 4;
+    emptyCell.textContent = showAbnormalOnly
+      ? "目前沒有 H / L 異常標記的項目。"
+      : "目前沒有可顯示的項目。";
+    emptyRow.append(emptyCell);
+    previewBody.append(emptyRow);
+    updatePreviewSummary();
+    return;
+  }
 
   let lastSectionKey = "";
   for (const row of orderedRows) {
@@ -1183,6 +1217,12 @@ function renderPreviewFourColumns() {
       flagSelect.append(option);
     }
     resultStack.append(resultLine, flagSelect);
+    if (isAbnormalRow(row)) {
+      const abnormalBadge = document.createElement("span");
+      abnormalBadge.className = `abnormal-badge ${row.flag === "H" ? "high" : "low"}`;
+      abnormalBadge.textContent = abnormalLabel(row);
+      resultStack.append(abnormalBadge);
+    }
     resultCell.append(resultStack);
 
     const referenceCell = document.createElement("td");
@@ -1206,6 +1246,7 @@ function invalidatePreview(message = "內容已變更，請重新按「整理並
   reviewedSource = "";
   reviewRows = [];
   exportApproved = false;
+  showAbnormalOnly = false;
   previewPanel.hidden = true;
   exportConfirmButton.disabled = true;
   generateButton.disabled = true;
@@ -1478,6 +1519,7 @@ const previewButton = document.querySelector("#previewButton");
 const previewPanel = document.querySelector("#previewPanel");
 const previewBody = document.querySelector("#previewBody");
 const previewSummary = document.querySelector("#previewSummary");
+const abnormalOnlyButton = document.querySelector("#abnormalOnlyButton");
 const exportConfirmButton = document.createElement("button");
 exportConfirmButton.id = "exportConfirmButton";
 exportConfirmButton.className = "confirm-export-button";
@@ -1509,6 +1551,11 @@ sourceText.addEventListener("input", () => {
 
 previewButton.addEventListener("click", () => {
   preparePreview({ scroll: true });
+});
+
+abnormalOnlyButton?.addEventListener("click", () => {
+  showAbnormalOnly = !showAbnormalOnly;
+  renderPreviewFourColumns();
 });
 
 previewBody.addEventListener("input", (event) => {
