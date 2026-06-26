@@ -346,13 +346,13 @@ function parseTextLegacy(text) {
       continue;
     }
 
-    if (/^(?:檢體|檢體類別|檢體來源)\s*[:：]\s*$/i.test(line)) {
+    if (/^(?:檢體|體|檢體類別|檢體來源|\(\s*Specimen\s*type\s*\))\s*[:：]?\s*$/i.test(line)) {
       awaitingSpecimen = true;
       index += 1;
       continue;
     }
 
-    const bilingualSpecimen = line.match(/^\(\s*Specimen\s*type\s*\)\s*(?:\t+|\s{2,})(.+)$/i);
+    const bilingualSpecimen = line.match(/^\(\s*Specimen\s*type\s*\)\s+(.+)$/i);
     if (bilingualSpecimen) {
       specimen = bilingualSpecimen[1].trim();
       awaitingSpecimen = false;
@@ -377,7 +377,7 @@ function parseTextLegacy(text) {
       continue;
     }
 
-    const specimenMatch = line.match(/^(?:SPECIMEN|檢體|檢體類別|檢體來源)\s*[:：]\s*(.+)$/i);
+    const specimenMatch = line.match(/^(?:SPECIMEN|檢體|體|檢體類別|檢體來源)\s*[:：]\s*(.+)$/i);
     const specimenHeading = line.match(/^\[?\s*(BLOOD|SERUM|PLASMA|URINE(?:\(SPOT\))?)\s*\]?$/i);
     if (specimenMatch || specimenHeading) {
       specimen = (specimenMatch?.[1] || specimenHeading[1]).trim();
@@ -391,7 +391,7 @@ function parseTextLegacy(text) {
       while (index < lines.length) {
         const next = lines[index].trimEnd();
         if (
-          /^(?:SPECIMEN|檢體|檢體類別|檢體來源)\s*[:：]/i.test(next) ||
+          /^(?:SPECIMEN|檢體|體|檢體類別|檢體來源)\s*[:：]/i.test(next) ||
           isImageHeading(next.trim())
         ) break;
         if (next.trim()) block.push(next);
@@ -432,7 +432,7 @@ function parseText(text) {
       continue;
     }
 
-    if (/^(?:檢體|Specimen)\s*[:：]?\s*$/i.test(line)) {
+    if (/^(?:檢體|體|Specimen|\(\s*Specimen\s*type\s*\))\s*[:：]?\s*$/i.test(line)) {
       awaitingSpecimen = true;
       pendingOrder = "";
       singleResultMode = false;
@@ -441,7 +441,7 @@ function parseText(text) {
       continue;
     }
 
-    const bilingualSpecimen = line.match(/^\(\s*Specimen\s*type\s*\)\s*(?:\t+|\s{2,})(.+)$/i);
+    const bilingualSpecimen = line.match(/^\(\s*Specimen\s*type\s*\)\s+(.+)$/i);
     if (bilingualSpecimen) {
       specimen = bilingualSpecimen[1].trim();
       awaitingSpecimen = false;
@@ -518,7 +518,7 @@ function parseText(text) {
       continue;
     }
 
-    const specimenMatch = line.match(/^(?:SPECIMEN|檢體)\s*[:：]\s*(.+)$/i);
+    const specimenMatch = line.match(/^(?:SPECIMEN|檢體|體)\s*[:：]\s*(.+)$/i);
     const specimenHeading = line.match(/^\[?\s*(BLOOD|SERUM|PLASMA|URINE(?:\(SPOT\))?)\s*\]?$/i);
     if (specimenMatch || specimenHeading) {
       specimen = (specimenMatch?.[1] || specimenHeading[1]).trim();
@@ -534,7 +534,7 @@ function parseText(text) {
       index += 1;
       while (index < lines.length) {
         const next = lines[index].trimEnd();
-        if (/^(?:SPECIMEN|檢體)\s*[:：]/i.test(next) || isImageHeading(next.trim())) break;
+        if (/^(?:SPECIMEN|檢體|體)\s*[:：]/i.test(next) || isImageHeading(next.trim())) break;
         if (next.trim()) block.push(next);
         index += 1;
       }
@@ -995,10 +995,11 @@ function isAbnormalRow(row) {
   return ["H", "L"].includes((row.flag || "").toUpperCase());
 }
 
-function abnormalLabel(row) {
-  if ((row.flag || "").toUpperCase() === "H") return "偏高";
-  if ((row.flag || "").toUpperCase() === "L") return "偏低";
-  return "正常";
+function resultToneClass(row) {
+  const flag = (row.flag || "").toUpperCase();
+  if (flag === "H") return "result-high";
+  if (flag === "L") return "result-low";
+  return "result-normal";
 }
 
 function needsVisibleReviewBadge(row) {
@@ -1198,6 +1199,7 @@ function renderPreviewFourColumns() {
     enCell.append(createPreviewInput(row, "en"));
 
     const resultCell = document.createElement("td");
+    resultCell.classList.add(resultToneClass(row));
     const resultStack = document.createElement("div");
     resultStack.className = "preview-cell-stack";
     const resultLine = document.createElement("div");
@@ -1210,7 +1212,7 @@ function renderPreviewFourColumns() {
     flagSelect.dataset.id = row.id;
     flagSelect.dataset.field = "flag";
     flagSelect.setAttribute("aria-label", "高低標記");
-    for (const [value, label] of [["", "正常"], ["H", "H（偏高）"], ["L", "L（偏低）"]]) {
+    for (const [value, label] of [["", "正常"], ["H", "H"], ["L", "L"]]) {
       const option = document.createElement("option");
       option.value = value;
       option.textContent = label;
@@ -1218,12 +1220,6 @@ function renderPreviewFourColumns() {
       flagSelect.append(option);
     }
     resultStack.append(resultLine, flagSelect);
-    if (isAbnormalRow(row)) {
-      const abnormalBadge = document.createElement("span");
-      abnormalBadge.className = `abnormal-badge ${row.flag === "H" ? "high" : "low"}`;
-      abnormalBadge.textContent = abnormalLabel(row);
-      resultStack.append(abnormalBadge);
-    }
     resultCell.append(resultStack);
 
     const referenceCell = document.createElement("td");

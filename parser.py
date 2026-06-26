@@ -2,7 +2,11 @@ import re
 from dataclasses import dataclass
 
 SPECIMEN_RE = re.compile(
-    r"^\s*(?:SPECIMEN|檢體|檢體類別|檢體來源)\s*[:：]\s*(.+)$",
+    r"^\s*(?:SPECIMEN|\u6aa2\u9ad4|\u9ad4|\u6aa2\u9ad4\u985e\u5225|\u6aa2\u9ad4\u4f86\u6e90)\s*[:\uff1a]\s*(.+)$",
+    re.I,
+)
+SPECIMEN_LABEL_RE = re.compile(
+    r"^\s*(?:SPECIMEN|Specimen|\(\s*Specimen\s*type\s*\)|\u6aa2\u9ad4|\u9ad4|\u6aa2\u9ad4\u985e\u5225|\u6aa2\u9ad4\u4f86\u6e90)\s*[:\uff1a]?\s*$",
     re.I,
 )
 SPECIMEN_HEADING_RE = re.compile(
@@ -165,13 +169,13 @@ def parse_text(text):
             index += 1
             continue
 
-        if re.match(r"^(?:檢體|檢體類別|檢體來源)\s*[:：]\s*$", line, re.I):
+        if SPECIMEN_LABEL_RE.match(line):
             awaiting_specimen = True
             index += 1
             continue
 
         bilingual_specimen = re.match(
-            r"^\(\s*Specimen\s*type\s*\)\s*(?:\t+|\s{2,})(.+)$",
+            r"^\(\s*Specimen\s*type\s*\)\s+(.+)$",
             line,
             re.I,
         )
@@ -265,7 +269,7 @@ def _parse_text_with_single_orders(text):
             index += 1
             continue
 
-        if re.match(r"^(?:檢體|Specimen)\s*[:：]?\s*$", line, re.I):
+        if SPECIMEN_LABEL_RE.match(line):
             awaiting_specimen = True
             pending_order = ""
             single_result_mode = False
@@ -274,7 +278,7 @@ def _parse_text_with_single_orders(text):
             continue
 
         bilingual_specimen = re.match(
-            r"^\(\s*Specimen\s*type\s*\)\s*(?:\t+|\s{2,})(.+)$",
+            r"^\(\s*Specimen\s*type\s*\)\s+(.+)$",
             line,
             re.I,
         )
@@ -368,11 +372,7 @@ def _parse_text_with_single_orders(text):
             index += 1
             continue
 
-        specimen_match = re.match(
-            r"^\s*(?:SPECIMEN|檢體)\s*[:：]\s*(.+)$",
-            line,
-            re.I,
-        )
+        specimen_match = SPECIMEN_RE.match(line)
         specimen_heading = SPECIMEN_HEADING_RE.match(line)
         if specimen_match or specimen_heading:
             specimen = (
@@ -391,7 +391,7 @@ def _parse_text_with_single_orders(text):
             index += 1
             while index < len(lines):
                 next_line = lines[index].rstrip()
-                if re.match(r"^\s*(?:SPECIMEN|檢體)\s*[:：]", next_line, re.I) or IMAGE_START_RE.search(next_line):
+                if SPECIMEN_RE.match(next_line) or SPECIMEN_LABEL_RE.match(next_line) or IMAGE_START_RE.search(next_line):
                     break
                 if next_line.strip():
                     block.append(next_line)

@@ -182,6 +182,26 @@ Cr | 98 | mg/dL |
         self.assertEqual((urine_rows[0]["key"], urine_rows[0]["zh"]), ("Urine Creatinine", "尿液肌酸酐"))
         self.assertEqual((blood_rows[0]["result"], urine_rows[0]["result"]), ("0.72", "98"))
 
+    def test_split_specimen_type_line_keeps_urine_context(self):
+        text = """檢體　　：
+(Specimen type)\tBlood
+Cr | 0.72 | mg/dL | M:0.7~1.2; F:0.5-0.9
+體　　：
+(Specimen type)
+URINE(SPOT)
+Cr | 98 | mg/dL |
+"""
+        grouped = classify_items(parse_text(text))
+        rows = [
+            row
+            for categories in grouped.values()
+            for category_rows in categories.values()
+            for row in category_rows
+        ]
+
+        self.assertEqual([row["key"] for row in rows], ["Creatinine", "Urine Creatinine"])
+        self.assertEqual([row["result"] for row in rows], ["0.72", "98"])
+
     def test_urine_ratio_report_suppresses_component_noise(self):
         text = """Medical order: Crea,Protein
 GLU | | |
