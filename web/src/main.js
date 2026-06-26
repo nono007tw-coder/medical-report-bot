@@ -25,7 +25,6 @@ const DAILY_KIDNEY_THEMES = [
   {
     label: "Sunday Glomerular Calm",
     title: "週日 · 腎絲球靜謐藍",
-    summary: "以腎絲球過濾為靈感，讓報告閱讀節奏更沉穩。",
     accent: "#7c8fe8",
     accentDark: "#4657a8",
     navy: "#111a3d",
@@ -36,7 +35,6 @@ const DAILY_KIDNEY_THEMES = [
   {
     label: "Monday Renal Clarity",
     title: "週一 · 腎功能清晰藍",
-    summary: "聚焦 eGFR、肌酸酐與趨勢判讀，開週保持清楚。",
     accent: "#2fa7d6",
     accentDark: "#17769b",
     navy: "#082437",
@@ -47,7 +45,6 @@ const DAILY_KIDNEY_THEMES = [
   {
     label: "Tuesday Electrolyte Balance",
     title: "週二 · 電解質平衡綠",
-    summary: "以鈉鉀鈣磷的平衡感，呈現穩定而乾淨的介面。",
     accent: "#2dbb8f",
     accentDark: "#168167",
     navy: "#0b2f2d",
@@ -58,7 +55,6 @@ const DAILY_KIDNEY_THEMES = [
   {
     label: "Wednesday Proteinuria Focus",
     title: "週三 · 蛋白尿焦點紫",
-    summary: "強調 Pro/Cr、ACR 等腎臟風險指標，畫面更有辨識度。",
     accent: "#9b72d9",
     accentDark: "#6542a3",
     navy: "#22183f",
@@ -69,7 +65,6 @@ const DAILY_KIDNEY_THEMES = [
   {
     label: "Thursday Dialysis Precision",
     title: "週四 · 透析精準青",
-    summary: "以透析照護的精準與規律，保持輸出流程明確。",
     accent: "#20b9c8",
     accentDark: "#0e7e8a",
     navy: "#082c35",
@@ -80,7 +75,6 @@ const DAILY_KIDNEY_THEMES = [
   {
     label: "Friday Mineral Bone",
     title: "週五 · 礦物骨病暖金",
-    summary: "以鈣磷副甲狀腺軸線為主題，讓介面帶一點溫度。",
     accent: "#d39b31",
     accentDark: "#966719",
     navy: "#2c2412",
@@ -91,7 +85,6 @@ const DAILY_KIDNEY_THEMES = [
   {
     label: "Saturday Transplant Hope",
     title: "週六 · 移植希望墨綠",
-    summary: "用柔和墨綠呈現長期追蹤、穩定照護與希望感。",
     accent: "#4ca66a",
     accentDark: "#2d7446",
     navy: "#10291e",
@@ -145,21 +138,7 @@ function updateTaiwanClock() {
   }
 }
 
-function applyDailyThemeText() {
-  const theme = DAILY_KIDNEY_THEMES[new Date().getDay()];
-  const eyebrow = document.querySelector(".eyebrow");
-  if (eyebrow) eyebrow.lastChild.textContent = ` ${theme.label}`;
-  const privacyLabel = document.querySelector(".privacy-label");
-  if (privacyLabel) privacyLabel.textContent = "Kidney theme of the day";
-  const privacyLine = document.querySelector(".privacy-line");
-  if (privacyLine) {
-    const textNode = [...privacyLine.childNodes].find((node) => node.nodeType === Node.TEXT_NODE);
-    if (textNode) textNode.textContent = ` ${theme.summary}`;
-  }
-}
-
 applyDailyKidneyTheme();
-applyDailyThemeText();
 
 const SECTION_ORDER = ["抽血檢查", "驗尿檢查", "影像檢查", "其他檢查項目"];
 const CATEGORY_ORDER = {

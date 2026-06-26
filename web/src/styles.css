@@ -96,9 +96,6 @@ h1 em { color: color-mix(in srgb, var(--teal) 78%, white); font-style: normal; }
 .privacy-label { margin: 25px 0 8px; color: var(--teal); font-size: 10px; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase; }
 .privacy-card h2 { margin: 0; color: white; font-size: 23px; line-height: 1.38; }
 .privacy-card > p:not(.privacy-label) { margin: 15px 0 24px; color: #9fb6c4; font-size: 13px; line-height: 1.75; }
-.privacy-line { display: flex; align-items: center; gap: 10px; color: #cad9e1; font-size: 11px; letter-spacing: .8px; }
-.privacy-line span { width: 28px; height: 1px; background: var(--teal); }
-
 .workspace {
   padding: 42px 46px 34px; background: white; border: 1px solid var(--theme-border);
   border-radius: 28px; box-shadow: 0 30px 80px rgba(20,47,61,.14);
