@@ -225,7 +225,7 @@ textarea::placeholder { color: #9cabb1; }
 }
 .preview-table td.result-low input,
 .preview-table td.result-low select {
-  color: #7b520f; background: #fff7dc; border-color: #e7cc83; font-weight: 800;
+  color: #1f4f86; background: #eaf4ff; border-color: #8dbce8; font-weight: 800;
 }
 .preview-table td:nth-child(4), .preview-table td:nth-child(5) { text-align: center; }
 .specimen-cell {
