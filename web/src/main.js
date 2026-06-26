@@ -104,6 +104,8 @@ const DAILY_KIDNEY_THEMES = [
 function applyDailyKidneyTheme() {
   const theme = DAILY_KIDNEY_THEMES[new Date().getDay()];
   const root = document.documentElement;
+  document.body.dataset.kidneyTheme = String(new Date().getDay());
+  document.body.dataset.kidneyThemeName = theme.title;
   root.style.setProperty("--navy", theme.navy);
   root.style.setProperty("--navy-soft", theme.navySoft);
   root.style.setProperty("--teal", theme.accent);
