@@ -103,12 +103,6 @@ const DAILY_KIDNEY_THEMES = [
 
 function applyDailyKidneyTheme() {
   const theme = DAILY_KIDNEY_THEMES[new Date().getDay()];
-  const taiwanDate = new Intl.DateTimeFormat("zh-TW", {
-    timeZone: "Asia/Taipei",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date());
   const root = document.documentElement;
   document.body.dataset.kidneyTheme = String(new Date().getDay());
   document.body.dataset.kidneyThemeName = theme.title;
@@ -120,13 +114,31 @@ function applyDailyKidneyTheme() {
   root.style.setProperty("--theme-glow-rgb", theme.glowRgb);
 
   document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme.navy);
+  updateTaiwanClock();
+  window.setInterval(updateTaiwanClock, 60_000);
+}
+
+function updateTaiwanClock() {
+  const taiwanNow = new Intl.DateTimeFormat("zh-TW", {
+    timeZone: "Asia/Taipei",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(new Date());
   const navBadge = document.querySelector(".nav-badge");
   if (navBadge) {
     navBadge.replaceChildren();
     const dot = document.createElement("span");
     dot.className = "status-dot";
-    navBadge.append(dot, ` ${taiwanDate}`);
+    navBadge.append(dot, ` ${taiwanNow}`);
   }
+}
+
+function applyDailyThemeText() {
+  const theme = DAILY_KIDNEY_THEMES[new Date().getDay()];
   const eyebrow = document.querySelector(".eyebrow");
   if (eyebrow) eyebrow.lastChild.textContent = ` ${theme.label}`;
   const privacyLabel = document.querySelector(".privacy-label");
@@ -139,6 +151,7 @@ function applyDailyKidneyTheme() {
 }
 
 applyDailyKidneyTheme();
+applyDailyThemeText();
 
 const SECTION_ORDER = ["抽血檢查", "驗尿檢查", "影像檢查", "其他檢查項目"];
 const CATEGORY_ORDER = {
