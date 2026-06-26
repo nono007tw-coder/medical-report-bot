@@ -648,6 +648,7 @@ function categoryForGroup(row) {
 let reviewRows = [];
 let reviewedSource = "";
 let previewTimer;
+let exportApproved = false;
 
 const UNIT_PATTERN = /^(?:%|‰|\/?(?:u|µ|μ)?l|10\^\d+\/(?:u|µ|μ)?l|(?:f|p|n|µ|μ|m)?g\/(?:d|m)?l|(?:m|µ|μ|n)?mol\/l|m?eq\/l|(?:m|µ|μ|n)?(?:iu|u)\/ml|(?:m|µ|μ|n)?(?:iu|u)\/l|au\/ml|bau\/ml|cu|coi|index|s\/co|copies?\/ml|copies?\/g|mg\/g|g\/g|ml\/min(?:\/1\.73m\^?2)?|fl|pg|sec|seconds?|min|hours?|ratio)$/i;
 const RESULT_PATTERN = /^(?:[<>]=?\s*)?(?:-?\d+(?:\.\d+)?|positive|negative|trace|few|moderate|many|normal|reactive|nonreactive|not detected|detected)$/i;
@@ -944,7 +945,12 @@ function updatePreviewSummary() {
     (row) => row.included && row.confidence === "needs-review",
   ).length;
   previewSummary.textContent = `智慧辨識 ${reviewRows.length} 列，目前輸出 ${included} 列；自動校正 ${corrected} 列，需確認 ${needsReview} 列，提示 ${notices} 列。`;
-  const canDownload = included > 0 && unresolved === 0;
+  const canApprove = included > 0 && unresolved === 0;
+  const canDownload = canApprove && exportApproved;
+  exportConfirmButton.disabled = !canApprove;
+  exportConfirmButton.textContent = exportApproved
+    ? "已確認預覽，可輸出 PDF / Word"
+    : "確認預覽，可以輸出 PDF / Word";
   generateButton.disabled = !canDownload;
   pdfButton.disabled = !canDownload;
 }
@@ -1070,7 +1076,9 @@ function renderPreviewFourColumns() {
 function invalidatePreview(message = "內容已變更，請重新按「整理並預覽」。") {
   reviewedSource = "";
   reviewRows = [];
+  exportApproved = false;
   previewPanel.hidden = true;
+  exportConfirmButton.disabled = true;
   generateButton.disabled = true;
   pdfButton.disabled = true;
   setStatus(message);
@@ -1084,10 +1092,11 @@ function preparePreview({ scroll = false } = {}) {
   }
   reviewRows = buildReviewRows(parseText(text));
   reviewedSource = text;
+  exportApproved = false;
   renderPreviewFourColumns();
   previewPanel.hidden = false;
   if (scroll) previewPanel.scrollIntoView({ behavior: "smooth", block: "start" });
-  setStatus("預覽已建立。若沒有黃色異常，可直接下載報告。", "success");
+  setStatus("預覽已建立。請先確認欄位內容，再按「確認預覽，可以輸出」。", "success");
   return true;
 }
 
@@ -1300,6 +1309,9 @@ function getReportData() {
   if (!reviewedSource || reviewedSource !== text) {
     throw new Error("內容尚未預覽，請先按「整理並預覽」");
   }
+  if (!exportApproved) {
+    throw new Error("請先確認預覽，再輸出 PDF 或 Word");
+  }
   const unresolved = reviewRows.filter(
     (row) => row.included && row.confidence === "needs-review",
   );
@@ -1328,27 +1340,33 @@ const previewButton = document.querySelector("#previewButton");
 const previewPanel = document.querySelector("#previewPanel");
 const previewBody = document.querySelector("#previewBody");
 const previewSummary = document.querySelector("#previewSummary");
+const exportConfirmButton = document.createElement("button");
+exportConfirmButton.id = "exportConfirmButton";
+exportConfirmButton.className = "confirm-export-button";
+exportConfirmButton.type = "button";
+exportConfirmButton.disabled = true;
+exportConfirmButton.textContent = "確認預覽，可以輸出 PDF / Word";
+previewPanel.appendChild(exportConfirmButton);
 
 fileInput.addEventListener("change", async () => {
   const file = fileInput.files[0];
   if (!file) return;
   fileName.textContent = file.name;
   sourceText.value = await file.text();
-  invalidatePreview(`已載入 ${file.name}，正在自動整理...`);
-  preparePreview();
+  invalidatePreview(`已載入 ${file.name}，請按「AI 智慧辨識並預覽」。`);
 });
 
 document.querySelector("#sampleButton").addEventListener("click", () => {
   sourceText.value = HOSPITAL_SAMPLE;
   fileName.textContent = "示範資料";
-  invalidatePreview("已載入示範資料，正在自動整理...");
-  preparePreview();
+  invalidatePreview("已載入示範資料，請按「AI 智慧辨識並預覽」。");
 });
 
 sourceText.addEventListener("input", () => {
   clearTimeout(previewTimer);
-  invalidatePreview("內容已變更，正在自動整理...");
-  previewTimer = setTimeout(() => preparePreview(), 350);
+  previewTimer = setTimeout(() => {
+    invalidatePreview("內容已變更，請重新按「AI 智慧辨識並預覽」。");
+  }, 150);
 });
 
 previewButton.addEventListener("click", () => {
@@ -1364,6 +1382,7 @@ previewBody.addEventListener("input", (event) => {
   if (control.dataset.field !== "included" && control.dataset.field !== "reportGroup") {
     refreshRowAssessment(row);
   }
+  exportApproved = false;
   updatePreviewSummary();
 });
 
@@ -1373,12 +1392,19 @@ previewBody.addEventListener("change", (event) => {
   const row = reviewRows.find((entry) => entry.id === Number(control.dataset.id));
   if (!row) return;
   row[control.dataset.field] = control.type === "checkbox" ? control.checked : control.value;
+  exportApproved = false;
   if (control.dataset.field !== "included" && control.dataset.field !== "reportGroup") {
     refreshRowAssessment(row);
     renderPreviewFourColumns();
   } else {
     updatePreviewSummary();
   }
+});
+
+exportConfirmButton.addEventListener("click", () => {
+  exportApproved = true;
+  updatePreviewSummary();
+  setStatus("已確認預覽。現在可以選擇下載 PDF 或 Word。", "success");
 });
 
 generateButton.addEventListener("click", async () => {
@@ -1393,7 +1419,7 @@ generateButton.addEventListener("click", async () => {
     console.error(error);
     setStatus(`無法產生報告：${error.message}`, "error");
   } finally {
-    generateButton.disabled = false;
+    updatePreviewSummary();
   }
 });
 
@@ -1473,7 +1499,7 @@ pdfButton.addEventListener("click", async () => {
     document.querySelector(".pdf-report")?.remove();
     setStatus(`無法產生 PDF：${error.message}`, "error");
   } finally {
-    pdfButton.disabled = false;
+    updatePreviewSummary();
   }
 });
 
