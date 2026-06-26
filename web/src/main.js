@@ -16,6 +16,8 @@ import {
   WidthType,
 } from "docx";
 import { saveAs } from "file-saver";
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
 import mapping from "./mapping.json";
 import "./styles.css";
 
@@ -1441,10 +1443,6 @@ pdfButton.addEventListener("click", async () => {
   setStatus("正在整理並製作 PDF，請稍候...");
   try {
     const { grouped, count } = getReportData();
-    const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
-      import("html2canvas"),
-      import("jspdf"),
-    ]);
     const report = makePdfReport(grouped);
     document.body.appendChild(report);
     const previousOverflow = document.documentElement.style.overflow;
