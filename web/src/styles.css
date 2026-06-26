@@ -234,7 +234,7 @@ textarea::placeholder { color: #9cabb1; }
 .specimen-blood { color: #8b3340; background: #fff2f4; }
 .specimen-urine { color: #8a5a0c; background: #fff7dc; }
 .specimen-image { color: #315f8a; background: #edf6ff; }
-.specimen-unknown { color: #7a6a4b; background: #fff9eb; }
+.specimen-unknown { color: transparent; background: white; }
 .preview-cell-stack { display: grid; gap: 7px; }
 .preview-cell-line { display: flex; align-items: center; gap: 7px; }
 .preview-cell-line > input[type="text"] { min-width: 0; }

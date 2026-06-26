@@ -326,7 +326,7 @@ function specimenLabel(row) {
   const kind = specimenKind(row.specimen);
   if (kind === "blood") return "血液";
   if (kind === "urine") return "尿液";
-  return "未判定";
+  return "";
 }
 
 function contextBaseName(row) {
