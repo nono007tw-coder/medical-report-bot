@@ -49,7 +49,7 @@ URINE_COMPONENT_CANONICALS = {
 }
 
 REFERENCE_FRAGMENT_RE = re.compile(r"^(?:[<>]=?)?\d+(?:\.\d+)?(?:\s*[~-]\s*\d+(?:\.\d+)?)?$")
-EXCLUDED_REPORT_CATEGORIES = {"一般生化檢查", "其他尿液檢查"}
+EXCLUDED_REPORT_CATEGORIES = {"一般生化檢查", "尿液一般檢查", "其他尿液檢查"}
 
 
 def _specimen_kind(specimen):

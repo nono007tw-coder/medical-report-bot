@@ -50,7 +50,7 @@ const REPORT_CATEGORY_ORDER = {
   "3. 尿液檢查": CATEGORY_ORDER.驗尿檢查,
   "4. 影像檢查": CATEGORY_ORDER.影像檢查,
 };
-const EXCLUDED_REPORT_CATEGORIES = new Set(["一般生化檢查", "其他尿液檢查"]);
+const EXCLUDED_REPORT_CATEGORIES = new Set(["一般生化檢查", "尿液一般檢查", "其他尿液檢查"]);
 const PATIENT_CATEGORY_LABELS = {
   血液常規檢查: "血球與貧血",
   凝血功能檢查: "凝血功能",

@@ -131,6 +131,15 @@ Creat\tH\t6.34\tmg/dL\tM:0.7~1.2; F:0.5-0.9 mg/dL
         ))
         self.assertNotIn("驗尿檢查", grouped)
 
+    def test_general_urinalysis_items_are_suppressed(self):
+        grouped = classify_items(parse_text(
+            "SPECIMEN: URINE\n"
+            "pH | 5.0 | | 5.0~8.0\n"
+            "Specific Gravity | 1.008 | | 1.003~1.035\n"
+            "Occult Blood | +/- | | Negative"
+        ))
+        self.assertNotIn("驗尿檢查", grouped)
+
     def test_vghtpe_unmapped_assays_keep_original_fields_and_category(self):
         text = """檢體　　：
 (Specimen type)\tBlood
