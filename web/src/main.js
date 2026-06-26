@@ -119,21 +119,29 @@ function applyDailyKidneyTheme() {
 }
 
 function updateTaiwanClock() {
+  const now = new Date();
   const taiwanNow = new Intl.DateTimeFormat("zh-TW", {
     timeZone: "Asia/Taipei",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
+  }).format(now);
+  const taiwanWeekday = new Intl.DateTimeFormat("zh-TW", {
+    timeZone: "Asia/Taipei",
+    weekday: "short",
+  }).format(now);
+  const taiwanTime = new Intl.DateTimeFormat("zh-TW", {
+    timeZone: "Asia/Taipei",
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-  }).format(new Date());
+  }).format(now);
   const navBadge = document.querySelector(".nav-badge");
   if (navBadge) {
     navBadge.replaceChildren();
     const dot = document.createElement("span");
     dot.className = "status-dot";
-    navBadge.append(dot, ` ${taiwanNow}`);
+    navBadge.append(dot, ` ${taiwanNow} ${taiwanWeekday} ${taiwanTime}`);
   }
 }
 
