@@ -321,6 +321,32 @@ function specimenKind(specimen = "") {
   return "unknown";
 }
 
+function specimenLabel(row) {
+  if (row.isImage || row.reportGroup === "4. 影像檢查") return "影像";
+  const kind = specimenKind(row.specimen);
+  if (kind === "blood") return "血液";
+  if (kind === "urine") return "尿液";
+  return "未判定";
+}
+
+function contextBaseName(row) {
+  return normalize(row.rawName || row.key || row.zh || "").replace(/^(urine|u)/, "");
+}
+
+function findCrossSpecimenNames(rows) {
+  const contexts = new Map();
+  for (const row of rows) {
+    const base = contextBaseName(row);
+    const kind = specimenKind(row.specimen);
+    if (!base || !["blood", "urine"].includes(kind)) continue;
+    if (!contexts.has(base)) contexts.set(base, new Set());
+    contexts.get(base).add(kind);
+  }
+  return [...contexts.entries()]
+    .filter(([, kinds]) => kinds.has("blood") && kinds.has("urine"))
+    .map(([base]) => base);
+}
+
 function lookupCanonical(rawName, specimen = "") {
   const normalized = normalize(rawName);
   const kind = specimenKind(specimen);
@@ -1115,8 +1141,12 @@ function updatePreviewSummary() {
   const unresolved = reviewRows.filter(
     (row) => !isExcludedReportRow(row) && row.included && row.confidence === "needs-review",
   ).length;
+  const crossSpecimenCount = findCrossSpecimenNames(visibleRows.filter((row) => row.included)).length;
   const filterText = showAbnormalOnly ? "目前只顯示異常值；" : "";
-  previewSummary.textContent = `${filterText}智慧辨識 ${visibleRows.length} 列，目前輸出 ${included} 列；異常 ${abnormal} 列，需確認 ${needsReview} 列。`;
+  const crossSpecimenText = crossSpecimenCount
+    ? `偵測到 ${crossSpecimenCount} 組同名項目同時出現在血液與尿液，已分開處理，請確認檢體欄。`
+    : "";
+  previewSummary.textContent = `${filterText}智慧辨識 ${visibleRows.length} 列，目前輸出 ${included} 列；異常 ${abnormal} 列，需確認 ${needsReview} 列。${crossSpecimenText}`;
   const canApprove = included > 0;
   const canDownload = canApprove;
   exportConfirmButton.disabled = !canApprove;
@@ -1164,7 +1194,7 @@ function renderPreviewFourColumns() {
     const emptyRow = document.createElement("tr");
     emptyRow.className = "preview-empty-row";
     const emptyCell = document.createElement("td");
-    emptyCell.colSpan = 4;
+    emptyCell.colSpan = 5;
     emptyCell.textContent = showAbnormalOnly
       ? "目前沒有 H / L 異常標記的項目。"
       : "目前沒有可顯示的項目。";
@@ -1182,7 +1212,7 @@ function renderPreviewFourColumns() {
       const sectionRow = document.createElement("tr");
       sectionRow.className = "preview-section-row";
       const sectionCell = document.createElement("td");
-      sectionCell.colSpan = 4;
+      sectionCell.colSpan = 5;
       sectionCell.textContent = `${row.reportGroup} · ${PATIENT_CATEGORY_LABELS[category] || category}`;
       sectionRow.append(sectionCell);
       previewBody.append(sectionRow);
@@ -1193,6 +1223,13 @@ function renderPreviewFourColumns() {
     if (row.confidence === "needs-review") tr.className = "warning-row critical-row";
     else if (row.confidence === "notice") tr.className = "warning-row";
     else if (row.confidence === "corrected") tr.className = "corrected-row";
+
+    const specimenCell = document.createElement("td");
+    const specimenClass = row.isImage || row.reportGroup === "4. 影像檢查"
+      ? "image"
+      : specimenKind(row.specimen);
+    specimenCell.className = `specimen-cell specimen-${specimenClass}`;
+    specimenCell.textContent = specimenLabel(row);
 
     const zhCell = document.createElement("td");
     const zhStack = document.createElement("div");
@@ -1262,7 +1299,7 @@ function renderPreviewFourColumns() {
     }
     referenceCell.append(referenceStack);
 
-    tr.append(zhCell, enCell, resultCell, referenceCell);
+    tr.append(specimenCell, zhCell, enCell, resultCell, referenceCell);
     previewBody.append(tr);
   }
 
